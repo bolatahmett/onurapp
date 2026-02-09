@@ -20,9 +20,12 @@ export const IpcChannels = {
   CUSTOMER_GET_ALL: 'customer:getAll',
   CUSTOMER_GET_ACTIVE: 'customer:getActive',
   CUSTOMER_GET_BY_ID: 'customer:getById',
+  CUSTOMER_GET_TEMPORARY: 'customer:getTemporary',
   CUSTOMER_CREATE: 'customer:create',
   CUSTOMER_UPDATE: 'customer:update',
   CUSTOMER_DELETE: 'customer:delete',
+  CUSTOMER_MERGE: 'customer:merge',
+  CUSTOMER_GET_HISTORY: 'customer:getHistory',
 
   // Sale
   SALE_GET_ALL: 'sale:getAll',
@@ -39,17 +42,43 @@ export const IpcChannels = {
   // Invoice
   INVOICE_GET_ALL: 'invoice:getAll',
   INVOICE_GET_BY_ID: 'invoice:getById',
+  INVOICE_GET_BY_CUSTOMER: 'invoice:getByCustomer',
   INVOICE_CREATE: 'invoice:create',
   INVOICE_UPDATE: 'invoice:update',
   INVOICE_DELETE: 'invoice:delete',
+  INVOICE_ISSUE: 'invoice:issue',
   INVOICE_EXPORT_PDF: 'invoice:exportPdf',
+  INVOICE_PRINT: 'invoice:print',
+
+  // Payment
+  PAYMENT_CREATE: 'payment:create',
+  PAYMENT_GET_BY_INVOICE: 'payment:getByInvoice',
+  PAYMENT_DELETE: 'payment:delete',
+  INVOICE_MARK_PAID: 'invoice:markPaid',
 
   // Report
   REPORT_DAILY_SUMMARY: 'report:dailySummary',
   REPORT_PRODUCT_SUMMARY: 'report:productSummary',
   REPORT_CUSTOMER_SUMMARY: 'report:customerSummary',
+  REPORT_CUSTOMER_HISTORY: 'report:customerHistory',
   REPORT_TRUCK_SUMMARY: 'report:truckSummary',
   REPORT_REVENUE_BY_PERIOD: 'report:revenueByPeriod',
+  REPORT_INVOICE_STATUS: 'report:invoiceStatus',
+  REPORT_GET_DAILY_SUMMARY: 'report:getDailySummary',
+  REPORT_GET_PRODUCT_SUMMARY: 'report:getProductSummary',
+  REPORT_GET_CUSTOMER_SUMMARY: 'report:getCustomerSummary',
+  REPORT_GET_TRUCK_SUMMARY: 'report:getTruckSummary',
+  REPORT_GET_INVOICE_STATUS: 'report:getInvoiceStatus',
+  REPORT_GET_REVENUE_SUMMARY: 'report:getRevenueSummary',
+
+  // Export
+  EXPORT_REPORT_CSV: 'export:reportCsv',
+  EXPORT_REPORT_PDF: 'export:reportPdf',
+  EXPORT_INVOICE_PDF: 'export:invoicePdf',
+  EXPORT_DAILY_REPORT_PDF: 'export:dailyReportPdf',
+  EXPORT_PRODUCT_REPORT_PDF: 'export:productReportPdf',
+  EXPORT_CUSTOMER_REPORT_PDF: 'export:customerReportPdf',
+  OPEN_PDF_FILE: 'export:openPdf',
 
   // Backup
   BACKUP_CREATE: 'backup:create',

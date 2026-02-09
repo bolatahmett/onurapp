@@ -1,4 +1,17 @@
-import { TruckStatus, UnitType, InvoiceStatus, BackupType } from './enums';
+import { 
+  TruckStatus, 
+  UnitType, 
+  InvoiceStatus, 
+  BackupType,
+  PaymentMethod,
+  CustomerType,
+  DiscountType,
+  AuditAction,
+} from './enums';
+
+// ============================================================================
+// EXISTING ENTITIES (Enhanced)
+// ============================================================================
 
 export interface Truck {
   id: string;
@@ -18,6 +31,9 @@ export interface Product {
   name: string;
   variety: string | null;
   defaultUnitType: UnitType;
+  code: string | null;
+  category: string | null;
+  basePrice: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -28,7 +44,14 @@ export interface Customer {
   name: string;
   phone: string | null;
   address: string | null;
+  email: string | null;
   taxId: string | null;
+  taxNumber: string | null;
+  contactPerson: string | null;
+  creditLimit: number | null;
+  paymentTerms: string | null;
+  customerType: CustomerType;
+  mergedFromId: string | null;
   isTemporary: boolean;
   isActive: boolean;
   createdAt: string;
@@ -45,6 +68,11 @@ export interface Sale {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  discountType: DiscountType;
+  discountAmount: number;
+  discountReason: string | null;
+  sellerName: string | null;
+  paymentMethod: string | null;
   saleDate: string;
   notes: string | null;
   createdAt: string;
@@ -63,9 +91,20 @@ export interface Invoice {
   invoiceNumber: string;
   customerId: string;
   totalAmount: number;
+  subtotal: number;
+  taxAmount: number;
+  taxRate: number;
+  netTotal: number;
   status: InvoiceStatus;
   issueDate: string | null;
   dueDate: string | null;
+  paymentReceivedDate: string | null;
+  paymentMethod: string | null;
+  paymentNotes: string | null;
+  issuedByUserId: string | null;
+  paidByUserId: string | null;
+  cancelledByUserId: string | null;
+  cancellationReason: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -89,7 +128,64 @@ export interface Setting {
   value: string;
 }
 
+// ============================================================================
+// NEW ENTITIES
+// ============================================================================
+
+export interface InvoiceLineItem {
+  id: string;
+  invoiceId: string;
+  saleId: string | null;
+  sequenceNumber: number;
+  quantity: number;
+  unitPrice: number;
+  discountType: DiscountType;
+  discountAmount: number;
+  lineTotal: number;
+  createdAt: string;
+}
+
+export interface Payment {
+  id: string;
+  invoiceId: string;
+  amount: number;
+  paidDate: string;
+  method: PaymentMethod | null;
+  notes: string | null;
+  reference: string | null;
+  createdAt: string;
+}
+
+export interface AuditLog {
+  id: string;
+  entityType: string;
+  entityId: string;
+  action: AuditAction;
+  oldValues: string | null;
+  newValues: string | null;
+  userId: string | null;
+  timestamp: string;
+}
+
+export interface InvoiceNumberSequence {
+  id: string;
+  year: number;
+  month: number;
+  lastSequence: number;
+}
+
+export interface CustomerMerge {
+  id: string;
+  sourceCustomerId: string;
+  targetCustomerId: string;
+  mergedAt: string;
+  mergedByUserId: string | null;
+}
+
+// ============================================================================
 // DTOs for creating/updating
+// ============================================================================
+
 export interface CreateTruckDto {
   plateNumber: string;
   driverName?: string;
@@ -109,12 +205,18 @@ export interface CreateProductDto {
   name: string;
   variety?: string;
   defaultUnitType: UnitType;
+  code?: string;
+  category?: string;
+  basePrice?: number;
 }
 
 export interface UpdateProductDto {
   name?: string;
   variety?: string;
   defaultUnitType?: UnitType;
+  code?: string;
+  category?: string;
+  basePrice?: number;
   isActive?: boolean;
 }
 
@@ -122,7 +224,13 @@ export interface CreateCustomerDto {
   name: string;
   phone?: string;
   address?: string;
+  email?: string;
   taxId?: string;
+  taxNumber?: string;
+  contactPerson?: string;
+  creditLimit?: number;
+  paymentTerms?: string;
+  customerType?: CustomerType;
   isTemporary?: boolean;
 }
 
@@ -130,7 +238,13 @@ export interface UpdateCustomerDto {
   name?: string;
   phone?: string;
   address?: string;
+  email?: string;
   taxId?: string;
+  taxNumber?: string;
+  contactPerson?: string;
+  creditLimit?: number;
+  paymentTerms?: string;
+  customerType?: CustomerType;
   isTemporary?: boolean;
   isActive?: boolean;
 }
@@ -142,7 +256,13 @@ export interface CreateSaleDto {
   unitType: UnitType;
   quantity: number;
   unitPrice: number;
+  discountType?: DiscountType;
+  discountAmount?: number;
+  discountReason?: string;
+  sellerName?: string;
+  paymentMethod?: string;
   notes?: string;
+  createInvoice?: boolean;
 }
 
 export interface UpdateSaleDto {
@@ -150,6 +270,9 @@ export interface UpdateSaleDto {
   unitType?: UnitType;
   quantity?: number;
   unitPrice?: number;
+  discountType?: DiscountType;
+  discountAmount?: number;
+  discountReason?: string;
   notes?: string;
 }
 
@@ -158,20 +281,48 @@ export interface CreateInvoiceDto {
   saleIds: string[];
   notes?: string;
   dueDate?: string;
+  taxRate?: number;
 }
 
 export interface UpdateInvoiceDto {
   status?: InvoiceStatus;
   notes?: string;
   dueDate?: string;
+  taxRate?: number;
 }
 
+export interface MarkInvoicePaidDto {
+  paymentMethod: PaymentMethod;
+  paidDate: string;
+  paymentNotes?: string;
+  paidByUserId?: string;
+}
+
+export interface PaymentDto {
+  invoiceId: string;
+  amount: number;
+  paidDate: string;
+  method: PaymentMethod;
+  notes?: string;
+  reference?: string;
+}
+
+export interface MergeCustomerDto {
+  sourceCustomerId: string;
+  targetCustomerId: string;
+  mergedByUserId?: string;
+}
+
+// ============================================================================
 // Report types
+// ============================================================================
+
 export interface DailySummary {
   date: string;
   totalSales: number;
   totalRevenue: number;
   totalTrucks: number;
+  truckBreakdown: TruckSummary[];
 }
 
 export interface ProductSummary {
@@ -187,6 +338,8 @@ export interface CustomerSummary {
   customerName: string;
   totalPurchases: number;
   totalAmount: number;
+  outstandingInvoices: number;
+  lastPurchaseDate: string | null;
 }
 
 export interface TruckSummary {
@@ -195,4 +348,23 @@ export interface TruckSummary {
   arrivalDate: string;
   totalSales: number;
   totalRevenue: number;
+}
+
+export interface RevenueSummary {
+  period: string;
+  totalRevenue: number;
+  invoiceCount: number;
+  paidAmount: number;
+  outstandingAmount: number;
+}
+
+export interface CustomerHistoryEntry {
+  saleId: string;
+  saleDate: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  invoiceNumber: string | null;
+  invoiceStatus: InvoiceStatus | null;
 }

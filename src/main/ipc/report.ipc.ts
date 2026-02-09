@@ -22,4 +22,59 @@ export function registerReportIpc(): void {
     (_, period: 'daily' | 'weekly' | 'monthly', startDate: string, endDate: string) =>
       service.getRevenueByPeriod(period, startDate, endDate)
   );
+
+  // New handlers with proper error handling
+  ipcMain.handle(IpcChannels.REPORT_GET_DAILY_SUMMARY, (_, startDate: string, endDate: string) => {
+    try {
+      const summaries = service.getDailySummary(startDate, endDate);
+      return { success: true, data: summaries };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.REPORT_GET_PRODUCT_SUMMARY, (_, startDate: string, endDate: string) => {
+    try {
+      const summaries = service.getProductSummary(startDate, endDate);
+      return { success: true, data: summaries };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.REPORT_GET_CUSTOMER_SUMMARY, (_, startDate: string, endDate: string) => {
+    try {
+      const summaries = service.getCustomerSummary(startDate, endDate);
+      return { success: true, data: summaries };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.REPORT_GET_TRUCK_SUMMARY, (_, startDate: string, endDate: string) => {
+    try {
+      const summaries = service.getTruckSummary(startDate, endDate);
+      return { success: true, data: summaries };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.REPORT_GET_INVOICE_STATUS, () => {
+    try {
+      const summary = service.getInvoiceStatus();
+      return { success: true, data: summary };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.REPORT_GET_REVENUE_SUMMARY, (_, startDate: string, endDate: string) => {
+    try {
+      const summary = service.getRevenueSummary(startDate, endDate);
+      return { success: true, data: summary };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
 }

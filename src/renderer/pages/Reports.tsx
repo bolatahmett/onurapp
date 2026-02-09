@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import RevenueChart from '../components/reports/RevenueChart';
+import TruckDrilldown from '../components/reports/TruckDrilldown';
 import { useIpc } from '../hooks/useIpc';
 import { DataTable } from '../components/common/DataTable';
 import { formatCurrency, formatDate, todayISO, daysAgoISO } from '../utils/formatters';
@@ -9,6 +11,9 @@ type ReportTab = 'daily' | 'product' | 'customer' | 'truck';
 
 export function Reports() {
   const { t } = useTranslation();
+  const [exporting, setExporting] = useState(false);
+  const [drillOpen, setDrillOpen] = useState(false);
+  const [drillTruckId, setDrillTruckId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ReportTab>('daily');
   const [startDate, setStartDate] = useState(daysAgoISO(30));
   const [endDate, setEndDate] = useState(todayISO());
@@ -122,6 +127,35 @@ export function Reports() {
             <span className="text-sm text-gray-500">{t('common.total')}: </span>
             <span className="text-xl font-bold text-primary-700">{formatCurrency(getTotalRevenue())}</span>
           </div>
+          <div className="pt-6 ml-auto">
+            <button
+              className="btn-secondary"
+              onClick={async () => {
+                try {
+                  setExporting(true);
+                  let res: any = null;
+                  if (activeTab === 'daily') res = await window.api.export.exportDailyReportPdf(startDate, endDate);
+                  else if (activeTab === 'product') res = await window.api.export.exportProductReportPdf(startDate, endDate);
+                  else if (activeTab === 'customer') res = await window.api.export.exportCustomerReportPdf(startDate, endDate);
+                  else res = await window.api.export.exportDailyReportPdf(startDate, endDate);
+
+                  if (res?.success) {
+                    alert(t('reports.exportSuccess'));
+                    window.api.export.openPdf(res.filepath);
+                  } else {
+                    alert(t('reports.exportError') + (res?.error ? (': ' + res.error) : ''));
+                  }
+                } catch (err: any) {
+                  alert(t('reports.exportError') + ': ' + (err.message || err));
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              disabled={exporting}
+            >
+              {exporting ? t('reports.exporting') : t('reports.exportPdf')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -145,7 +179,12 @@ export function Reports() {
       {/* Report Content */}
       <div className="card">
         {activeTab === 'daily' && (
-          <DataTable columns={dailyColumns} data={dailyData ?? []} loading={dailyLoading} />
+          <>
+            <div className="mb-4">
+              <RevenueChart data={dailyData ?? []} onBarClick={(date) => { setStartDate(date); setEndDate(date); }} />
+            </div>
+            <DataTable columns={dailyColumns} data={dailyData ?? []} loading={dailyLoading} />
+          </>
         )}
         {activeTab === 'product' && (
           <DataTable columns={productColumns} data={productData ?? []} loading={productLoading} />
@@ -154,7 +193,20 @@ export function Reports() {
           <DataTable columns={customerColumns} data={customerData ?? []} loading={customerLoading} />
         )}
         {activeTab === 'truck' && (
-          <DataTable columns={truckColumns} data={truckData ?? []} loading={truckLoading} />
+          <>
+            <DataTable
+              columns={[...truckColumns, { key: 'actions', header: t('common.actions'), render: (item: TruckSummary) => (
+                <div className="flex gap-2">
+                  <button className="text-sm text-blue-600 hover:underline" onClick={() => { setDrillTruckId(item.truckId); setDrillOpen(true); }}>
+                    {t('reports.viewSales') ?? 'View Sales'}
+                  </button>
+                </div>
+              ) }]}
+              data={truckData ?? []}
+              loading={truckLoading}
+            />
+            <TruckDrilldown open={drillOpen} truckId={drillTruckId} onClose={() => setDrillOpen(false)} />
+          </>
         )}
       </div>
     </div>

@@ -20,7 +20,7 @@ export class ReportService {
   }
 
   getDailySummary(startDate: string, endDate: string): DailySummary[] {
-    return this.queryAll(
+    const summaries = this.queryAll(
       `SELECT
         date(sale_date) as date,
         COUNT(*) as total_sales,
@@ -31,12 +31,41 @@ export class ReportService {
        GROUP BY date(sale_date)
        ORDER BY date DESC`,
       [startDate, endDate]
-    ).map((row) => ({
-      date: row.date,
-      totalSales: row.total_sales,
-      totalRevenue: row.total_revenue,
-      totalTrucks: row.total_trucks,
-    }));
+    );
+
+    // For each date, get truck breakdown
+    return summaries.map((row) => {
+      const date = row.date;
+      const truckBreakdown = this.queryAll(
+        `SELECT
+          t.id as truck_id,
+          t.plate_number,
+          t.arrival_date,
+          COALESCE(SUM(s.total_price), 0) as total_revenue,
+          COUNT(s.id) as total_sales
+         FROM trucks t
+         LEFT JOIN sales s ON t.id = s.truck_id AND date(s.sale_date) = ?
+         WHERE t.id IN (
+           SELECT DISTINCT truck_id FROM sales WHERE date(sale_date) = ?
+         )
+         GROUP BY t.id`,
+        [date, date]
+      ).map(tr => ({
+        truckId: tr.truck_id,
+        plateNumber: tr.plate_number,
+        arrivalDate: tr.arrival_date,
+        totalSales: tr.total_sales,
+        totalRevenue: tr.total_revenue,
+      }));
+
+      return {
+        date: row.date,
+        totalSales: row.total_sales,
+        totalRevenue: row.total_revenue,
+        totalTrucks: row.total_trucks,
+        truckBreakdown,
+      };
+    });
   }
 
   getProductSummary(startDate: string, endDate: string): ProductSummary[] {
@@ -63,12 +92,13 @@ export class ReportService {
   }
 
   getCustomerSummary(startDate: string, endDate: string): CustomerSummary[] {
-    return this.queryAll(
+    const summaries = this.queryAll(
       `SELECT
         s.customer_id,
         c.name as customer_name,
         COUNT(*) as total_purchases,
-        SUM(s.total_price) as total_amount
+        SUM(s.total_price) as total_amount,
+        MAX(s.sale_date) as last_purchase_date
        FROM sales s
        JOIN customers c ON s.customer_id = c.id
        WHERE s.customer_id IS NOT NULL
@@ -76,12 +106,28 @@ export class ReportService {
        GROUP BY s.customer_id
        ORDER BY total_amount DESC`,
       [startDate, endDate]
-    ).map((row) => ({
-      customerId: row.customer_id,
-      customerName: row.customer_name,
-      totalPurchases: row.total_purchases,
-      totalAmount: row.total_amount,
-    }));
+    );
+
+    return summaries.map((row) => {
+      // Count outstanding invoices for this customer
+      const invoiceStats = this.queryAll(
+        `SELECT COUNT(*) as outstanding_count
+         FROM invoices
+         WHERE customer_id = ? AND status IN ('DRAFT', 'ISSUED')`,
+        [row.customer_id]
+      );
+
+      const outstandingCount = invoiceStats[0]?.outstanding_count || 0;
+
+      return {
+        customerId: row.customer_id,
+        customerName: row.customer_name,
+        totalPurchases: row.total_purchases,
+        totalAmount: row.total_amount,
+        outstandingInvoices: outstandingCount,
+        lastPurchaseDate: row.last_purchase_date || null,
+      };
+    });
   }
 
   getTruckSummary(startDate: string, endDate: string): TruckSummary[] {
@@ -134,5 +180,53 @@ export class ReportService {
       revenue: row.revenue,
       count: row.count,
     }));
+  }
+
+  getInvoiceStatus(): { status: string; count: number; totalAmount: number }[] {
+    return this.queryAll(
+      `SELECT
+        status,
+        COUNT(*) as count,
+        COALESCE(SUM(net_total), 0) as total_amount
+       FROM invoices
+       GROUP BY status
+       ORDER BY status ASC`
+    ).map((row) => ({
+      status: row.status,
+      count: row.count,
+      totalAmount: row.total_amount,
+    }));
+  }
+
+  getRevenueSummary(startDate: string, endDate: string): {
+    totalRevenue: number;
+    invoiceCount: number;
+    paidAmount: number;
+    outstandingAmount: number;
+    averageInvoiceValue: number;
+  } {
+    const result = this.queryAll(
+      `SELECT
+        COALESCE(SUM(CASE WHEN i.status = 'PAID' THEN i.net_total ELSE 0 END), 0) as paid_amount,
+        COALESCE(SUM(CASE WHEN i.status IN ('DRAFT', 'ISSUED') THEN i.net_total ELSE 0 END), 0) as outstanding_amount,
+        COALESCE(SUM(i.subtotal), 0) as total_revenue,
+        COUNT(*) as invoice_count
+       FROM invoices i
+       WHERE date(i.created_at) BETWEEN ? AND ?`,
+      [startDate, endDate]
+    )[0];
+
+    const totalRevenue = result?.total_revenue || 0;
+    const invoiceCount = result?.invoice_count || 0;
+    const paidAmount = result?.paid_amount || 0;
+    const outstandingAmount = result?.outstanding_amount || 0;
+
+    return {
+      totalRevenue,
+      invoiceCount,
+      paidAmount,
+      outstandingAmount,
+      averageInvoiceValue: invoiceCount > 0 ? totalRevenue / invoiceCount : 0,
+    };
   }
 }

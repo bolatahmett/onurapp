@@ -5,6 +5,7 @@ import { useIpc } from '../hooks/useIpc';
 import { DataTable } from '../components/common/DataTable';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
+import MergeModal from '../components/customers/MergeModal';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import type { Customer, CreateCustomerDto, SaleWithDetails } from '@shared/types/entities';
 
@@ -15,6 +16,8 @@ export function Customers() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerSales, setCustomerSales] = useState<SaleWithDetails[]>([]);
+  const [showMerge, setShowMerge] = useState(false);
+  const [mergeSource, setMergeSource] = useState<Customer | null>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -95,6 +98,9 @@ export function Customers() {
           </button>
           <button onClick={() => viewSales(item)} className="text-green-600 hover:underline text-sm">
             {t('customers.salesHistory')}
+          </button>
+          <button onClick={() => { setMergeSource(item); setShowMerge(true); }} className="text-yellow-600 hover:underline text-sm">
+            {t('customers.merge')}
           </button>
         </div>
       ),
@@ -213,6 +219,17 @@ export function Customers() {
           </div>
         )}
       </Modal>
+
+      <MergeModal
+        open={showMerge}
+        sourceCustomerId={mergeSource?.id}
+        onClose={() => { setShowMerge(false); setMergeSource(null); }}
+        onMerged={async () => {
+          setShowMerge(false);
+          setMergeSource(null);
+          refresh();
+        }}
+      />
     </div>
   );
 }

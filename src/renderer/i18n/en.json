@@ -108,6 +108,8 @@
     "taxId": "Tax ID",
     "isTemporary": "Temporary Customer",
     "salesHistory": "Sales History",
+    "merge": "Merge",
+    "selectTarget": "Select target customer",
     "totalPurchases": "Total Purchases"
   },
   "invoices": {
@@ -140,7 +142,11 @@
     "weekly": "Weekly",
     "monthly": "Monthly",
     "revenue": "Revenue",
-    "salesCount": "Sale Count"
+    "salesCount": "Sale Count",
+    "exportPdf": "Export PDF",
+    "exporting": "Exporting...",
+    "exportSuccess": "Report exported",
+    "exportError": "Failed to export"
   },
   "settings": {
     "title": "Settings",

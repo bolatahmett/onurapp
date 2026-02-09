@@ -5,6 +5,7 @@ import { useIpc } from '../hooks/useIpc';
 import { DataTable } from '../components/common/DataTable';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
+import PaymentModal from '../components/invoices/PaymentModal';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/formatters';
 import type {
   Invoice,
@@ -22,6 +23,7 @@ export function Invoices() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithDetails | null>(null);
   const [uninvoicedSales, setUninvoicedSales] = useState<SaleWithDetails[]>([]);
   const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
@@ -271,7 +273,7 @@ export function Invoices() {
                 )}
                 {selectedInvoice.status === InvoiceStatus.ISSUED && (
                   <button
-                    onClick={() => updateStatus(selectedInvoice.id, InvoiceStatus.PAID)}
+                    onClick={() => setShowPayment(true)}
                     className="btn-primary btn-sm"
                   >
                     {t('invoices.status.PAID')}
@@ -294,6 +296,20 @@ export function Invoices() {
           </div>
         )}
       </Modal>
+
+      <PaymentModal
+        open={showPayment}
+        invoiceId={selectedInvoice?.id ?? null}
+        onClose={() => setShowPayment(false)}
+        onPaid={async () => {
+          setShowPayment(false);
+          if (selectedInvoice) {
+            const detail = await window.api.invoice.getById(selectedInvoice.id);
+            setSelectedInvoice(detail);
+          }
+          refresh();
+        }}
+      />
     </div>
   );
 }

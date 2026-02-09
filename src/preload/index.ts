@@ -28,9 +28,14 @@ const api = {
     getAll: () => ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_ALL),
     getActive: () => ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_ACTIVE),
     getById: (id: string) => ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_BY_ID, id),
+    getTemporary: () => ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_TEMPORARY),
     create: (dto: any) => ipcRenderer.invoke(IpcChannels.CUSTOMER_CREATE, dto),
     update: (id: string, dto: any) => ipcRenderer.invoke(IpcChannels.CUSTOMER_UPDATE, id, dto),
     delete: (id: string) => ipcRenderer.invoke(IpcChannels.CUSTOMER_DELETE, id),
+    merge: (sourceId: string, targetId: string) =>
+      ipcRenderer.invoke(IpcChannels.CUSTOMER_MERGE, sourceId, targetId),
+    getHistory: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_HISTORY, customerId),
   },
 
   // Sale
@@ -54,9 +59,24 @@ const api = {
   invoice: {
     getAll: () => ipcRenderer.invoke(IpcChannels.INVOICE_GET_ALL),
     getById: (id: string) => ipcRenderer.invoke(IpcChannels.INVOICE_GET_BY_ID, id),
-    create: (dto: any) => ipcRenderer.invoke(IpcChannels.INVOICE_CREATE, dto),
+    getByCustomer: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.INVOICE_GET_BY_CUSTOMER, customerId),
+    create: (customerId: string, saleIds: string[], dto: any) =>
+      ipcRenderer.invoke(IpcChannels.INVOICE_CREATE, customerId, saleIds, dto),
     update: (id: string, dto: any) => ipcRenderer.invoke(IpcChannels.INVOICE_UPDATE, id, dto),
+    issue: (id: string) => ipcRenderer.invoke(IpcChannels.INVOICE_ISSUE, id),
+    markPaid: (id: string, dto: any) => ipcRenderer.invoke(IpcChannels.INVOICE_MARK_PAID, id, dto),
     delete: (id: string) => ipcRenderer.invoke(IpcChannels.INVOICE_DELETE, id),
+    exportPdf: (invoiceId: string) =>
+      ipcRenderer.invoke(IpcChannels.EXPORT_INVOICE_PDF, invoiceId),
+  },
+
+  // Payment
+  payment: {
+    create: (dto: any) => ipcRenderer.invoke(IpcChannels.PAYMENT_CREATE, dto),
+    getByInvoice: (invoiceId: string) =>
+      ipcRenderer.invoke(IpcChannels.PAYMENT_GET_BY_INVOICE, invoiceId),
+    delete: (id: string) => ipcRenderer.invoke(IpcChannels.PAYMENT_DELETE, id),
   },
 
   // Report
@@ -66,11 +86,36 @@ const api = {
     productSummary: (startDate: string, endDate: string) =>
       ipcRenderer.invoke(IpcChannels.REPORT_PRODUCT_SUMMARY, startDate, endDate),
     customerSummary: (startDate: string, endDate: string) =>
-      ipcRenderer.invoke(IpcChannels.REPORT_CUSTOMER_SUMMARY, startDate, endDate),
-    truckSummary: (startDate: string, endDate: string) =>
-      ipcRenderer.invoke(IpcChannels.REPORT_TRUCK_SUMMARY, startDate, endDate),
-    revenueByPeriod: (period: string, startDate: string, endDate: string) =>
-      ipcRenderer.invoke(IpcChannels.REPORT_REVENUE_BY_PERIOD, period, startDate, endDate),
+       ipcRenderer.invoke(IpcChannels.REPORT_CUSTOMER_SUMMARY, startDate, endDate),
+     truckSummary: (startDate: string, endDate: string) =>
+       ipcRenderer.invoke(IpcChannels.REPORT_TRUCK_SUMMARY, startDate, endDate),
+     revenueByPeriod: (period: string, startDate: string, endDate: string) =>
+       ipcRenderer.invoke(IpcChannels.REPORT_REVENUE_BY_PERIOD, period, startDate, endDate),
+     getDailySummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_DAILY_SUMMARY, startDate, endDate),
+    getProductSummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_PRODUCT_SUMMARY, startDate, endDate),
+    getCustomerSummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_CUSTOMER_SUMMARY, startDate, endDate),
+    getTruckSummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_TRUCK_SUMMARY, startDate, endDate),
+    getInvoiceStatus: () =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_INVOICE_STATUS),
+    getRevenueSummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_REVENUE_SUMMARY, startDate, endDate),
+  },
+
+  // Export
+  export: {
+    exportInvoicePdf: (invoiceId: string) =>
+      ipcRenderer.invoke(IpcChannels.EXPORT_INVOICE_PDF, invoiceId),
+    exportDailyReportPdf: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.EXPORT_DAILY_REPORT_PDF, startDate, endDate),
+    exportProductReportPdf: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.EXPORT_PRODUCT_REPORT_PDF, startDate, endDate),
+    exportCustomerReportPdf: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.EXPORT_CUSTOMER_REPORT_PDF, startDate, endDate),
+    openPdf: (filepath: string) => ipcRenderer.invoke(IpcChannels.OPEN_PDF_FILE, filepath),
   },
 
   // Backup

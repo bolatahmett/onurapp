@@ -108,6 +108,8 @@
     "taxId": "Vergi No",
     "isTemporary": "Geçici Müşteri",
     "salesHistory": "Satış Geçmişi",
+    "merge": "Birleştir",
+    "selectTarget": "Hedef müşteriyi seçin",
     "totalPurchases": "Toplam Alım"
   },
   "invoices": {
@@ -140,7 +142,11 @@
     "weekly": "Haftalık",
     "monthly": "Aylık",
     "revenue": "Gelir",
-    "salesCount": "Satış Adedi"
+    "salesCount": "Satış Adedi",
+    "exportPdf": "PDF Dışa Aktar",
+    "exporting": "Dışa aktarılıyor...",
+    "exportSuccess": "Rapor çıktı dosyası oluşturuldu",
+    "exportError": "Dışa aktarma başarısız"
   },
   "settings": {
     "title": "Ayarlar",

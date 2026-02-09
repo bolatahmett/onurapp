@@ -4,6 +4,7 @@ import { registerCustomerIpc } from './customer.ipc';
 import { registerSaleIpc } from './sale.ipc';
 import { registerInvoiceIpc } from './invoice.ipc';
 import { registerReportIpc } from './report.ipc';
+import { registerExportIpc } from './export.ipc';
 import { registerBackupIpc } from './backup.ipc';
 import { registerSettingsIpc } from './settings.ipc';
 
@@ -14,6 +15,7 @@ export function registerAllIpc(): void {
   registerSaleIpc();
   registerInvoiceIpc();
   registerReportIpc();
+  registerExportIpc();
   registerBackupIpc();
   registerSettingsIpc();
 }

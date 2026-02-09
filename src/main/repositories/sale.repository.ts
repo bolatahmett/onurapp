@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BaseRepository } from './base.repository';
 import { Sale, SaleWithDetails, CreateSaleDto, UpdateSaleDto } from '../../shared/types/entities';
-import { UnitType } from '../../shared/types/enums';
+import { UnitType, DiscountType } from '../../shared/types/enums';
 
 export class SaleRepository extends BaseRepository {
   private readonly selectWithDetails = `
@@ -61,13 +61,16 @@ export class SaleRepository extends BaseRepository {
   create(dto: CreateSaleDto): Sale {
     const id = uuidv4();
     const now = this.now();
-    const totalPrice = dto.quantity * dto.unitPrice;
+    const totalPrice = (dto.quantity * dto.unitPrice) - (dto.discountAmount ?? 0);
 
     this.execute(
-      `INSERT INTO sales (id, truck_id, product_id, customer_id, unit_type, quantity, unit_price, total_price, sale_date, notes, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO sales (id, truck_id, product_id, customer_id, unit_type, quantity, unit_price, total_price, 
+                         discount_type, discount_amount, discount_reason, seller_name, payment_method, sale_date, notes, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, dto.truckId, dto.productId, dto.customerId ?? null,
-       dto.unitType, dto.quantity, dto.unitPrice, totalPrice, now,
+       dto.unitType, dto.quantity, dto.unitPrice, totalPrice,
+       dto.discountType ?? DiscountType.FIXED, dto.discountAmount ?? 0, dto.discountReason ?? null,
+       dto.sellerName ?? null, dto.paymentMethod ?? null, now,
        dto.notes ?? null, now, now]
     );
 
@@ -81,17 +84,25 @@ export class SaleRepository extends BaseRepository {
 
     const quantity = dto.quantity ?? row.quantity;
     const unitPrice = dto.unitPrice ?? row.unit_price;
-    const totalPrice = quantity * unitPrice;
+    const discountAmount = dto.discountAmount ?? row.discount_amount ?? 0;
+    const totalPrice = (quantity * unitPrice) - discountAmount;
     const now = this.now();
 
     this.execute(
-      `UPDATE sales SET customer_id = ?, unit_type = ?, quantity = ?, unit_price = ?, total_price = ?, notes = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE sales SET customer_id = ?, unit_type = ?, quantity = ?, unit_price = ?, total_price = ?, 
+                       discount_type = ?, discount_amount = ?, discount_reason = ?, notes = ?, updated_at = ? WHERE id = ?`,
       [
         dto.customerId !== undefined ? dto.customerId : row.customer_id,
         dto.unitType ?? row.unit_type,
-        quantity, unitPrice, totalPrice,
+        quantity,
+        unitPrice,
+        totalPrice,
+        dto.discountType ?? row.discount_type,
+        discountAmount,
+        dto.discountReason !== undefined ? dto.discountReason : row.discount_reason,
         dto.notes !== undefined ? dto.notes : row.notes,
-        now, id,
+        now,
+        id,
       ]
     );
 
@@ -110,7 +121,7 @@ export class SaleRepository extends BaseRepository {
     return saleIds.length;
   }
 
-  linkToInvoice(saleIds: string[], invoiceId: string): number {
+  linkToInvoice(saleIds: string[], invoiceId: string | null): number {
     const now = this.now();
     for (const saleId of saleIds) {
       this.execute(
@@ -137,6 +148,11 @@ export class SaleRepository extends BaseRepository {
       quantity: row.quantity,
       unitPrice: row.unit_price,
       totalPrice: row.total_price,
+      discountType: row.discount_type as DiscountType,
+      discountAmount: row.discount_amount ?? 0,
+      discountReason: row.discount_reason,
+      sellerName: row.seller_name,
+      paymentMethod: row.payment_method,
       saleDate: row.sale_date,
       notes: row.notes,
       createdAt: row.created_at,
@@ -155,6 +171,11 @@ export class SaleRepository extends BaseRepository {
       quantity: row.quantity,
       unitPrice: row.unit_price,
       totalPrice: row.total_price,
+      discountType: row.discount_type as DiscountType,
+      discountAmount: row.discount_amount ?? 0,
+      discountReason: row.discount_reason,
+      sellerName: row.seller_name,
+      paymentMethod: row.payment_method,
       saleDate: row.sale_date,
       notes: row.notes,
       createdAt: row.created_at,
