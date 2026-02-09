@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(if exist node_modules rd /s /q node_modules)",
+      "Bash(if exist package-lock.json del /f package-lock.json)",
+      "Bash(powershell -Command \"cd ''C:\\\\Users\\\\AhmetBolat\\\\Projects\\\\PoC\\\\Claude\\\\OnurLtd''; if \\(Test-Path node_modules\\) { Remove-Item -Recurse -Force node_modules }; if \\(Test-Path package-lock.json\\) { Remove-Item -Force package-lock.json }; npm install 2>&1\")",
+      "Bash(npx tsc:*)",
+      "Bash(npm i:*)",
+      "Bash(npx vite build:*)",
+      "Bash(dir:*)",
+      "Bash(npx electron .)",
+      "Bash(node -e:*)"
+    ]
+  }
+}

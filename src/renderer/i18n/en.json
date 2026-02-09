@@ -1,0 +1,162 @@
+{
+  "app": {
+    "title": "OnurLtd Market"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "sales": "Sales",
+    "trucks": "Trucks",
+    "products": "Products",
+    "customers": "Customers",
+    "invoices": "Invoices",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "total": "Total",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "notes": "Notes",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "noData": "No data found",
+    "success": "Success",
+    "error": "Error",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "name": "Name",
+    "phone": "Phone",
+    "address": "Address",
+    "back": "Back",
+    "export": "Export",
+    "refresh": "Refresh"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "todaySales": "Today's Sales",
+    "todayRevenue": "Today's Revenue",
+    "activeTrucks": "Active Trucks",
+    "totalCustomers": "Total Customers",
+    "recentSales": "Recent Sales",
+    "quickActions": "Quick Actions"
+  },
+  "trucks": {
+    "title": "Truck Management",
+    "newTruck": "New Truck",
+    "plateNumber": "Plate Number",
+    "driverName": "Driver Name",
+    "driverPhone": "Driver Phone",
+    "arrivalDate": "Arrival Date",
+    "departureDate": "Departure Date",
+    "closeTruck": "Close Truck",
+    "status": {
+      "ACTIVE": "Active",
+      "CLOSED": "Closed"
+    },
+    "confirmClose": "Are you sure you want to close this truck?",
+    "totalSales": "Total Sales"
+  },
+  "sales": {
+    "title": "Sales",
+    "newSale": "New Sale",
+    "quickEntry": "Quick Entry",
+    "product": "Product",
+    "unitType": "Unit",
+    "quantity": "Quantity",
+    "unitPrice": "Unit Price",
+    "totalPrice": "Total Price",
+    "customer": "Customer",
+    "truck": "Truck",
+    "saleDate": "Sale Date",
+    "saveAndNew": "Save & New",
+    "noCustomer": "No Customer Selected",
+    "selectProduct": "Select product",
+    "selectTruck": "Select truck",
+    "selectCustomer": "Select customer (optional)",
+    "assignCustomer": "Assign Customer",
+    "unassigned": "Unassigned Sales",
+    "uninvoiced": "Uninvoiced",
+    "unitTypes": {
+      "PALLET": "Pallet",
+      "CRATE": "Crate"
+    }
+  },
+  "products": {
+    "title": "Product Management",
+    "newProduct": "New Product",
+    "productName": "Product Name",
+    "variety": "Variety",
+    "defaultUnit": "Default Unit",
+    "isActive": "Active"
+  },
+  "customers": {
+    "title": "Customer Management",
+    "newCustomer": "New Customer",
+    "customerName": "Customer Name",
+    "taxId": "Tax ID",
+    "isTemporary": "Temporary Customer",
+    "salesHistory": "Sales History",
+    "totalPurchases": "Total Purchases"
+  },
+  "invoices": {
+    "title": "Invoice Management",
+    "newInvoice": "New Invoice",
+    "invoiceNumber": "Invoice Number",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "totalAmount": "Total Amount",
+    "selectSales": "Select Sales",
+    "exportPdf": "Export PDF",
+    "status": {
+      "DRAFT": "Draft",
+      "ISSUED": "Issued",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "dailySummary": "Daily Summary",
+    "productReport": "Product Report",
+    "customerReport": "Customer Report",
+    "truckReport": "Truck Report",
+    "revenueChart": "Revenue Chart",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "period": "Period",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "revenue": "Revenue",
+    "salesCount": "Sale Count"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "backup": "Backup",
+    "backupNow": "Backup Now",
+    "restoreBackup": "Restore Backup",
+    "autoBackup": "Auto Backup",
+    "backupInterval": "Backup Interval (hours)",
+    "maxBackups": "Maximum Backups",
+    "backupDirectory": "Backup Directory",
+    "selectDirectory": "Select Directory",
+    "backupHistory": "Backup History",
+    "languages": {
+      "tr": "Türkçe",
+      "en": "English"
+    }
+  }
+}

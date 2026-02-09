@@ -1,0 +1,9 @@
+export const APP_NAME = 'OnurLtd Market';
+export const DB_NAME = 'onurltd.db';
+export const BACKUP_DIR_NAME = 'backups';
+export const DEFAULT_LANGUAGE = 'tr';
+export const SUPPORTED_LANGUAGES = ['tr', 'en'] as const;
+export const DEFAULT_BACKUP_INTERVAL_HOURS = 6;
+export const DEFAULT_MAX_BACKUPS = 10;
+export const CURRENCY_SYMBOL = '₺';
+export const CURRENCY_CODE = 'TRY';

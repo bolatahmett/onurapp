@@ -1,0 +1,65 @@
+{
+  "name": "onurltd",
+  "version": "1.0.0",
+  "description": "Fruit Market Management System - Offline-first desktop application",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
+    "dev:main": "tsc -p tsconfig.main.json --watch",
+    "dev:renderer": "vite",
+    "build": "npm run build:main && npm run build:preload && npm run build:renderer",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:preload": "esbuild src/preload/index.ts --bundle --platform=node --outfile=dist/preload/index.js --external:electron",
+    "build:renderer": "vite build",
+    "start": "electron .",
+    "dist": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "sql.js": "^1.12.0",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/sql.js": "^1.4.9",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.27.3",
+    "i18next": "^24.2.2",
+    "lucide-react": "^0.469.0",
+    "postcss": "^8.4.49",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-i18next": "^15.4.0",
+    "react-router-dom": "^7.1.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "zustand": "^5.0.3"
+  },
+  "build": {
+    "appId": "com.onurltd.market",
+    "productName": "OnurLtd Market",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "resources/**/*",
+      "node_modules/sql.js/dist/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "extraResources": [
+      {
+        "from": "node_modules/sql.js/dist/sql-wasm.wasm",
+        "to": "sql-wasm.wasm"
+      }
+    ]
+  }
+}

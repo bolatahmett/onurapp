@@ -1,0 +1,162 @@
+{
+  "app": {
+    "title": "OnurLtd Market"
+  },
+  "nav": {
+    "dashboard": "Pano",
+    "sales": "Satışlar",
+    "trucks": "TIR'lar",
+    "products": "Ürünler",
+    "customers": "Müşteriler",
+    "invoices": "Faturalar",
+    "reports": "Raporlar",
+    "settings": "Ayarlar"
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "create": "Oluştur",
+    "close": "Kapat",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "total": "Toplam",
+    "actions": "İşlemler",
+    "status": "Durum",
+    "date": "Tarih",
+    "notes": "Notlar",
+    "yes": "Evet",
+    "no": "Hayır",
+    "confirm": "Onayla",
+    "loading": "Yükleniyor...",
+    "noData": "Veri bulunamadı",
+    "success": "Başarılı",
+    "error": "Hata",
+    "all": "Tümü",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "name": "Ad",
+    "phone": "Telefon",
+    "address": "Adres",
+    "back": "Geri",
+    "export": "Dışa Aktar",
+    "refresh": "Yenile"
+  },
+  "dashboard": {
+    "title": "Pano",
+    "todaySales": "Bugünkü Satışlar",
+    "todayRevenue": "Bugünkü Gelir",
+    "activeTrucks": "Aktif TIR'lar",
+    "totalCustomers": "Toplam Müşteri",
+    "recentSales": "Son Satışlar",
+    "quickActions": "Hızlı İşlemler"
+  },
+  "trucks": {
+    "title": "TIR Yönetimi",
+    "newTruck": "Yeni TIR",
+    "plateNumber": "Plaka No",
+    "driverName": "Şoför Adı",
+    "driverPhone": "Şoför Telefon",
+    "arrivalDate": "Geliş Tarihi",
+    "departureDate": "Çıkış Tarihi",
+    "closeTruck": "TIR'ı Kapat",
+    "status": {
+      "ACTIVE": "Aktif",
+      "CLOSED": "Kapalı"
+    },
+    "confirmClose": "Bu TIR'ı kapatmak istediğinize emin misiniz?",
+    "totalSales": "Toplam Satış"
+  },
+  "sales": {
+    "title": "Satışlar",
+    "newSale": "Yeni Satış",
+    "quickEntry": "Hızlı Giriş",
+    "product": "Ürün",
+    "unitType": "Birim",
+    "quantity": "Miktar",
+    "unitPrice": "Birim Fiyat",
+    "totalPrice": "Toplam Tutar",
+    "customer": "Müşteri",
+    "truck": "TIR",
+    "saleDate": "Satış Tarihi",
+    "saveAndNew": "Kaydet ve Yeni",
+    "noCustomer": "Müşteri Seçilmedi",
+    "selectProduct": "Ürün seçin",
+    "selectTruck": "TIR seçin",
+    "selectCustomer": "Müşteri seçin (opsiyonel)",
+    "assignCustomer": "Müşteri Ata",
+    "unassigned": "Atanmamış Satışlar",
+    "uninvoiced": "Faturalanmamış",
+    "unitTypes": {
+      "PALLET": "Palet",
+      "CRATE": "Kasa"
+    }
+  },
+  "products": {
+    "title": "Ürün Yönetimi",
+    "newProduct": "Yeni Ürün",
+    "productName": "Ürün Adı",
+    "variety": "Çeşit",
+    "defaultUnit": "Varsayılan Birim",
+    "isActive": "Aktif"
+  },
+  "customers": {
+    "title": "Müşteri Yönetimi",
+    "newCustomer": "Yeni Müşteri",
+    "customerName": "Müşteri Adı",
+    "taxId": "Vergi No",
+    "isTemporary": "Geçici Müşteri",
+    "salesHistory": "Satış Geçmişi",
+    "totalPurchases": "Toplam Alım"
+  },
+  "invoices": {
+    "title": "Fatura Yönetimi",
+    "newInvoice": "Yeni Fatura",
+    "invoiceNumber": "Fatura No",
+    "issueDate": "Düzenleme Tarihi",
+    "dueDate": "Vade Tarihi",
+    "totalAmount": "Toplam Tutar",
+    "selectSales": "Satışları Seçin",
+    "exportPdf": "PDF İndir",
+    "status": {
+      "DRAFT": "Taslak",
+      "ISSUED": "Düzenlendi",
+      "PAID": "Ödendi",
+      "CANCELLED": "İptal"
+    }
+  },
+  "reports": {
+    "title": "Raporlar",
+    "dailySummary": "Günlük Özet",
+    "productReport": "Ürün Raporu",
+    "customerReport": "Müşteri Raporu",
+    "truckReport": "TIR Raporu",
+    "revenueChart": "Gelir Grafiği",
+    "startDate": "Başlangıç Tarihi",
+    "endDate": "Bitiş Tarihi",
+    "period": "Dönem",
+    "daily": "Günlük",
+    "weekly": "Haftalık",
+    "monthly": "Aylık",
+    "revenue": "Gelir",
+    "salesCount": "Satış Adedi"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "language": "Dil",
+    "backup": "Yedekleme",
+    "backupNow": "Şimdi Yedekle",
+    "restoreBackup": "Yedeği Geri Yükle",
+    "autoBackup": "Otomatik Yedekleme",
+    "backupInterval": "Yedekleme Aralığı (saat)",
+    "maxBackups": "Maksimum Yedek Sayısı",
+    "backupDirectory": "Yedek Dizini",
+    "selectDirectory": "Dizin Seç",
+    "backupHistory": "Yedekleme Geçmişi",
+    "languages": {
+      "tr": "Türkçe",
+      "en": "English"
+    }
+  }
+}
