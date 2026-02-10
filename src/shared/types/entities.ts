@@ -8,6 +8,7 @@ import {
   DiscountType,
   AuditAction,
   PaymentStatus,
+  UserRole,
 } from './enums';
 
 // ============================================================================
@@ -497,4 +498,45 @@ export interface DebtAgingReport {
   customerCount: number;
   overdueCustomerCount: number;
   customers: CustomerDebtSummary[];
+}
+
+export interface User {
+  id: string;
+  username: string;
+  role: UserRole;
+  firstName: string | null;
+  lastName: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface Session {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface CreateUserDto {
+  username: string;
+  password?: string;
+  role?: UserRole;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface UpdateUserDto {
+  password?: string;
+  role?: UserRole;
+  firstName?: string;
+  lastName?: string;
+  isActive?: boolean;
+}
+
+export interface LoginDto {
+  username: string;
+  password?: string;
 }

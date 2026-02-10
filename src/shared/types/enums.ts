@@ -63,3 +63,8 @@ export enum PaymentStatus {
   PAID = 'PAID',
   OVERDUE = 'OVERDUE',
 }
+
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+}

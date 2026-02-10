@@ -116,6 +116,15 @@ export const IpcChannels = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
   SETTINGS_GET_ALL: 'settings:getAll',
+
+  // Auth
+  AUTH_LOGIN: 'auth:login',
+  AUTH_LOGOUT: 'auth:logout',
+  AUTH_GET_CURRENT_USER: 'auth:getCurrentUser',
+  AUTH_CREATE_USER: 'auth:createUser',
+  AUTH_UPDATE_USER: 'auth:updateUser',
+  AUTH_DELETE_USER: 'auth:deleteUser',
+  AUTH_GET_ALL_USERS: 'auth:getAllUsers',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

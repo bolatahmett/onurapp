@@ -11,8 +11,10 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
+import { useAuthStore } from '../../store/authStore';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
@@ -22,18 +24,22 @@ const navItems = [
   { path: '/customers', icon: Users, labelKey: 'nav.customers' },
   { path: '/invoices', icon: FileText, labelKey: 'nav.invoices' },
   { path: '/reports', icon: BarChart3, labelKey: 'nav.reports' },
+  { path: '/users', icon: Shield, labelKey: 'nav.users', adminOnly: true },
   { path: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
 
 export function Sidebar() {
   const { t } = useTranslation();
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'ADMIN';
+
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <aside
-      className={`bg-gray-900 text-white flex flex-col transition-all duration-200 ${
-        sidebarCollapsed ? 'w-16' : 'w-56'
-      }`}
+      className={`bg-gray-900 text-white flex flex-col transition-all duration-200 ${sidebarCollapsed ? 'w-16' : 'w-56'
+        }`}
     >
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         {!sidebarCollapsed && (
@@ -48,16 +54,15 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 py-4">
-        {navItems.map((item) => (
+        {visibleNavItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             end={item.path === '/'}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              `flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${isActive
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
               }`
             }
           >

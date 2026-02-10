@@ -14,7 +14,7 @@ const api = {
     // Inventory Management
     getInventory: (truckId: string) => ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_GET, truckId),
     addInventory: (truckId: string, dto: any) => ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_ADD, truckId, dto),
-    updateInventory: (truckId: string, productId: string, quantity: number) => 
+    updateInventory: (truckId: string, productId: string, quantity: number) =>
       ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_UPDATE, truckId, productId, quantity),
     deleteInventory: (truckId: string, productId: string) =>
       ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_DELETE, truckId, productId),
@@ -123,12 +123,12 @@ const api = {
     productSummary: (startDate: string, endDate: string) =>
       ipcRenderer.invoke(IpcChannels.REPORT_PRODUCT_SUMMARY, startDate, endDate),
     customerSummary: (startDate: string, endDate: string) =>
-       ipcRenderer.invoke(IpcChannels.REPORT_CUSTOMER_SUMMARY, startDate, endDate),
-     truckSummary: (startDate: string, endDate: string) =>
-       ipcRenderer.invoke(IpcChannels.REPORT_TRUCK_SUMMARY, startDate, endDate),
-     revenueByPeriod: (period: string, startDate: string, endDate: string) =>
-       ipcRenderer.invoke(IpcChannels.REPORT_REVENUE_BY_PERIOD, period, startDate, endDate),
-     getDailySummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_CUSTOMER_SUMMARY, startDate, endDate),
+    truckSummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_TRUCK_SUMMARY, startDate, endDate),
+    revenueByPeriod: (period: string, startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_REVENUE_BY_PERIOD, period, startDate, endDate),
+    getDailySummary: (startDate: string, endDate: string) =>
       ipcRenderer.invoke(IpcChannels.REPORT_GET_DAILY_SUMMARY, startDate, endDate),
     getProductSummary: (startDate: string, endDate: string) =>
       ipcRenderer.invoke(IpcChannels.REPORT_GET_PRODUCT_SUMMARY, startDate, endDate),
@@ -180,6 +180,17 @@ const api = {
     set: (key: string, value: string) =>
       ipcRenderer.invoke(IpcChannels.SETTINGS_SET, key, value),
     getAll: () => ipcRenderer.invoke(IpcChannels.SETTINGS_GET_ALL),
+  },
+
+  // Auth
+  auth: {
+    login: (dto: any) => ipcRenderer.invoke(IpcChannels.AUTH_LOGIN, dto),
+    logout: () => ipcRenderer.invoke(IpcChannels.AUTH_LOGOUT),
+    getCurrentUser: () => ipcRenderer.invoke(IpcChannels.AUTH_GET_CURRENT_USER),
+    createUser: (dto: any) => ipcRenderer.invoke(IpcChannels.AUTH_CREATE_USER, dto),
+    updateUser: (id: string, dto: any) => ipcRenderer.invoke(IpcChannels.AUTH_UPDATE_USER, { id, dto }),
+    deleteUser: (id: string) => ipcRenderer.invoke(IpcChannels.AUTH_DELETE_USER, id),
+    getAllUsers: () => ipcRenderer.invoke(IpcChannels.AUTH_GET_ALL_USERS),
   },
 };
 
