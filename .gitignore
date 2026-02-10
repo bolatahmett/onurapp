@@ -3,3 +3,8 @@ dist
 build
 coverage
 nul
+*.pak
+*.dll
+*.exe
+/release/win-unpacked
+*.dat

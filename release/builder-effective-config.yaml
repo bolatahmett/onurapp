@@ -1,0 +1,29 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.onurltd.market
+productName: OnurLtd Market
+files:
+  - filter:
+      - dist/**/*
+      - resources/**/*
+      - node_modules/sql.js/dist/**/*
+win:
+  target:
+    - portable
+    - nsis
+  certificateFile: null
+  certificatePassword: <stripped sensitive data>
+  signingHashAlgorithms:
+    - sha256
+  rfc3161TimeStampServer: null
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: OnurLtd Market
+extraResources:
+  - from: node_modules/sql.js/dist/sql-wasm.wasm
+    to: sql-wasm.wasm
+electronVersion: 33.4.11

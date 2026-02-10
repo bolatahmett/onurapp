@@ -1,0 +1,128 @@
+# OnurLtd Market - Kurulum ve Özet
+
+## 📦 Paket İçeriği
+
+```
+output/
+├── OnurLtd Market.exe       (★ ÇİFT TIKLA BU DOSYAYA)
+├── README.md                (Talimatlar)
+├── KURULUM.txt              (Bu dosya)
+├── resources/               (Uygulama kaynakları)
+└── [Diğer sistem dosyaları]
+```
+
+## ⚡ 5 Saniye Kurulum
+
+1. **output** klasörünü başka bilgisayara kopyalayın
+2. **OnurLtd Market.exe** dosyasını çift tıklatın
+3. Bitti! Uygulama açılacak ve çalışmaya hazır
+
+## 📋 İlk Kurulum Adımları
+
+Uygulama ilk açıldığında:
+
+1. **Dil Seçimi:** Türkçe seçin (TR)
+2. **Ayarlar Sayfası:** 
+   - Vergi oranı belirleyin (varsayılan: %8)
+   - Fatura sırası başlat numarasını ayarlayın
+3. **Ürün:** Satılacak ürünleri tanımlayın
+4. **Müşteriler:** İş yapacağınız müşterileri ekleyin
+5. **TIR:** Kamyonları ve envanterlerini belirleyin
+
+## 🚀 Temel İş Akışı
+
+### 1. Satış Yapma
+- **Satışlar** → Yeni Satış
+- Müşteri, ürün ve miktar seçin
+- İsteğe bağlı: Ödeme durumunu "Ödendi" işaretleyin
+- İsteğe bağlı: Otomatik fatura oluştur seçeneğini işaretleyin
+- Kaydet
+
+### 2. Fatura Yönetimi
+- **Faturalar** → Tüm faturalar
+- Ödeme durumunu görebilirsiniz
+- Ödeme yapıldığında güncelleme yapın
+- PDF veya yazdırma için çıktı alın
+
+### 3. TIR Envanteri
+- **TIR** → Yeni TIR
+- Plaka, şoför bilgilerini girin
+- Ürün envanteri ekleyin (Crate/Pallet/Box)
+- Satış yaparken otomatik olarak stok düşülür
+
+### 4. Müşteri Yönetimi
+- **Müşteriler** → Müşteri ekle
+- Borç durumunu takip edin
+- Ödeme geçmişini görün
+
+### 5. Raporlar
+- **Raporlar** → Farklı raporlara erişin
+- Günlük özet
+- Müşteri borçları
+- TIR performansı
+
+## 💾 Veri Yedekleme
+
+**Önemli:** Düzenli olarak yedek alın!
+
+1. Uygulamada **Ayarlar** → **Yedekle** tıklayın
+2. Yedek dosyası masaüstüne kaydedilir
+3. Bu dosyayı güvenli bir yerde saklayın
+4. Gerekirse **Geri Yükle** butonu ile eski verileri geri getirebilirsiniz
+
+## 🔍 Önemli Bilgiler
+
+- ✅ **Çevrimdışı Çalışır** - İnternet gerekmez
+- ✅ **Kurulum Gerektirmez** - EXE dosyasını çalıştırın
+- ✅ **Taşınabilir** - Tüm verileri yanında götürün
+- ✅ **Hızlı** - Yerel veritabanı kullanır
+- ✅ **Güvenli** - Veriler sadece bilgisayarınızda saklanır
+
+## ⌨️ Kısayollar
+
+| Tuş Kombinasyonu | İşlem |
+|---|---|
+| `Ctrl+Home` | Ana Sayfa |
+| `Ctrl+S` | Kaydet |
+| `Ctrl+N` | Yeni Kayıt |
+| `Esc` | Pencereyi Kapat |
+
+## 🆘 Sorun Giderme
+
+### Problem: "Veritabanı Hatası"
+**Çözüm:** 
+1. Uygulamayı kapatın
+2. `C:\Users\[KullanıcıAdı]\AppData\Roaming\OnurLtd Market` klasörünü silin
+3. Uygulamayı yeniden başlatın
+
+### Problem: "Açılmıyor"
+**Çözüm:**
+1. Windows'u yeniden başlatın
+2. Antivirus yazılımını kontrol edin
+3. `.NET Framework 4.8+` kuruldu mu diye kontrol edin
+
+### Problem: "Yavaş çalışıyor"
+**Çözüm:**
+1. Gereksiz uygulamaları kapatın
+2. Disk alanını kontrol edin (minimum 500MB)
+3. RAM'ı kontrol edin (4GB+ önerilir)
+
+## 📞 Başkasına Kurulum Yapma
+
+Başka birinin bilgisayarına kurmak için:
+1. `output` klasörünü ZIP yapın veya USB'ye kopyalayın
+2. Hedef bilgisayarda zip'i açın
+3. `OnurLtd Market.exe` dosyasını çalıştırın
+4. Kişiye README.md'yi gösterin
+
+## 🔐 Güvenlik
+
+- Uygulamaya giriş şifresi: Ayarlarda ayarlanabilir
+- Veriler yerel olarak şifrelenmez ama bilgisayarınızda güvendedir
+- Yasal raporlar için audit log tutulur
+
+---
+
+**Başarısız kurulum durumunda:** README.md dosyasına bakın veya sistem yöneticinize başvurun.
+
+**Son Güncelleme:** Şubat 2026

@@ -114,42 +114,45 @@ export function Trucks() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let truckId = editingTruck?.id;
+      
       if (editingTruck) {
         await window.api.truck.update(editingTruck.id, form);
       } else {
-        await window.api.truck.create(form as CreateTruckDto);
+        const newTruck = await window.api.truck.create(form as CreateTruckDto);
+        truckId = newTruck.id;
       }
 
-      // If there's a newly created truck and inventory items, add them
-      if (!editingTruck && inventoryItems.length > 0) {
-        const createdTrucks = await window.api.truck.getActive();
-        const newTruck = createdTrucks[createdTrucks.length - 1];
-        
-        for (const item of inventoryItems) {
-          await window.api.truck.addInventory(newTruck.id, {
-            productId: item.productId,
-            quantity: item.quantity,
-            unitType: item.unitType,
-          });
-        }
-      } else if (editingTruck) {
-        // For edited truck, handle inventory changes
-        const currentProductIds = inventoryItems.map(item => item.productId);
-        
-        // Delete items that were in DB but removed from UI
-        const deletedProductIds = existingInventoryIds.filter(id => !currentProductIds.includes(id));
-        for (const productId of deletedProductIds) {
-          await window.api.truck.deleteInventory(editingTruck.id, productId);
-        }
-        
-        // Add new items (not in existingInventoryIds)
-        const newItems = inventoryItems.filter(item => !existingInventoryIds.includes(item.productId));
-        for (const item of newItems) {
-          await window.api.truck.addInventory(editingTruck.id, {
-            productId: item.productId,
-            quantity: item.quantity,
-            unitType: item.unitType,
-          });
+      // If there's inventory items, add them to the truck
+      if (truckId) {
+        if (!editingTruck && inventoryItems.length > 0) {
+          // For new truck, add all inventory items
+          for (const item of inventoryItems) {
+            await window.api.truck.addInventory(truckId, {
+              productId: item.productId,
+              quantity: item.quantity,
+              unitType: item.unitType,
+            });
+          }
+        } else if (editingTruck) {
+          // For edited truck, handle inventory changes
+          const currentProductIds = inventoryItems.map(item => item.productId);
+          
+          // Delete items that were in DB but removed from UI
+          const deletedProductIds = existingInventoryIds.filter(id => !currentProductIds.includes(id));
+          for (const productId of deletedProductIds) {
+            await window.api.truck.deleteInventory(editingTruck.id, productId);
+          }
+          
+          // Add new items (not in existingInventoryIds)
+          const newItems = inventoryItems.filter(item => !existingInventoryIds.includes(item.productId));
+          for (const item of newItems) {
+            await window.api.truck.addInventory(editingTruck.id, {
+              productId: item.productId,
+              quantity: item.quantity,
+              unitType: item.unitType,
+            });
+          }
         }
       }
 

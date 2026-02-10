@@ -55,7 +55,23 @@
       "node_modules/sql.js/dist/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "certificateFile": null,
+      "certificatePassword": null,
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "rfc3161TimeStampServer": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "OnurLtd Market"
     },
     "extraResources": [
       {
