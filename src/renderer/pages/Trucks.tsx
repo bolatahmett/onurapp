@@ -20,9 +20,6 @@ export function Trucks() {
   const { t } = useTranslation();
   const { data: trucks, loading, refresh } = useIpc<Truck[]>(() => window.api.truck.getAll());
   const { data: products } = useIpc<Product[]>(() => window.api.product.getActive());
-  const { data: inventory } = useIpc<TruckInventory[]>(() => 
-    editingTruck ? window.api.truck.getInventory(editingTruck.id) : Promise.resolve([])
-  );
   
   const [showForm, setShowForm] = useState(false);
   const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
@@ -30,6 +27,7 @@ export function Trucks() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [newInventoryProductId, setNewInventoryProductId] = useState('');
   const [newInventoryQty, setNewInventoryQty] = useState('');
+  const [newInventoryUnitType, setNewInventoryUnitType] = useState<UnitType>(UnitType.CRATE);
 
   const [form, setForm] = useState({ plateNumber: '', driverName: '', driverPhone: '', notes: '' });
 
@@ -39,7 +37,7 @@ export function Trucks() {
     setInventoryItems([]);
     setNewInventoryProductId('');
     setNewInventoryQty('');
-      setNewInventoryUnitType(UnitType.CRATE);
+    setNewInventoryUnitType(UnitType.CRATE);
   };
 
   const openCreate = () => {
@@ -47,7 +45,7 @@ export function Trucks() {
     setShowForm(true);
   };
 
-  const openEdit = (truck: Truck) => {
+  const openEdit = async (truck: Truck) => {
     setForm({
       plateNumber: truck.plateNumber,
       driverName: truck.driverName ?? '',
@@ -55,10 +53,22 @@ export function Trucks() {
       notes: truck.notes ?? '',
     });
     setEditingTruck(truck);
-    setInventoryItems([]);
     setNewInventoryProductId('');
     setNewInventoryQty('');
+    setNewInventoryUnitType(UnitType.CRATE);
     setShowForm(true);
+
+    // Load inventory immediately when opening edit modal
+    try {
+      const inventory = await window.api.truck.getInventory(truck.id);
+      setInventoryItems(inventory.map(inv => ({
+        productId: inv.productId,
+        quantity: inv.quantity,
+        unitType: inv.unitType,
+      })));
+    } catch (err) {
+      setInventoryItems([]);
+    }
   };
 
   const addInventoryItem = () => {
@@ -78,9 +88,10 @@ export function Trucks() {
       if (existing >= 0) {
         const updated = [...prev];
         updated[existing].quantity = qty;
+        updated[existing].unitType = newInventoryUnitType;
         return updated;
       }
-      return [...prev, { productId: newInventoryProductId, quantity: qty }];
+      return [...prev, { productId: newInventoryProductId, quantity: qty, unitType: newInventoryUnitType }];
     });
 
     setNewInventoryProductId('');
@@ -109,6 +120,7 @@ export function Trucks() {
           await window.api.truck.addInventory(newTruck.id, {
             productId: item.productId,
             quantity: item.quantity,
+            unitType: item.unitType,
           });
         }
       } else if (editingTruck && inventoryItems.length > 0) {
@@ -117,6 +129,7 @@ export function Trucks() {
           await window.api.truck.addInventory(editingTruck.id, {
             productId: item.productId,
             quantity: item.quantity,
+            unitType: item.unitType,
           });
         }
       }
@@ -265,6 +278,17 @@ export function Trucks() {
                   value={newInventoryQty}
                   onChange={(e) => setNewInventoryQty(e.target.value)}
                 />
+                <select
+                  className="select-field w-32"
+                  value={newInventoryUnitType}
+                  onChange={(e) => setNewInventoryUnitType(e.target.value as UnitType)}
+                >
+                  {Object.values(UnitType).map((ut) => (
+                    <option key={ut} value={ut}>
+                      {t(`sales.unitTypes.${ut}`)}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={addInventoryItem}
@@ -281,7 +305,7 @@ export function Trucks() {
                     return (
                       <div key={item.productId} className="flex items-center justify-between bg-white p-2 rounded">
                         <span className="text-sm">
-                          {product?.name} {product?.variety ? `(${product?.variety})` : ''} - {item.quantity}
+                          {product?.name} {product?.variety ? `(${product?.variety})` : ''} - {item.quantity} {t(`sales.unitTypes.${item.unitType}`)}
                         </span>
                         <button
                           type="button"

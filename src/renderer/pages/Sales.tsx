@@ -11,6 +11,7 @@ import type {
   Product,
   Customer,
   CreateSaleDto,
+  TruckInventory,
 } from '@shared/types/entities';
 import { UnitType, PaymentStatus } from '@shared/types/enums';
 
@@ -27,6 +28,7 @@ export function Sales() {
   const [assignCustomerId, setAssignCustomerId] = useState('');
   const [filterTruck, setFilterTruck] = useState('');
   const [remainingInventory, setRemainingInventory] = useState<number | null>(null);
+  const [truckInventory, setTruckInventory] = useState<TruckInventory[]>([]);
 
   const qtyRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +66,28 @@ export function Sales() {
     };
     fetchRemainingInventory();
   }, [form.truckId, form.productId]);
+
+  // Load truck inventory when truck changes
+  useEffect(() => {
+    const loadTruckInventory = async () => {
+      if (form.truckId) {
+        try {
+          const inventory = await window.api.truck.getInventory(form.truckId);
+          setTruckInventory(inventory);
+          // Clear product selection if current product is not in truck inventory
+          if (form.productId && !inventory.some((inv) => inv.productId === form.productId)) {
+            setForm((f) => ({ ...f, productId: '' }));
+            setRemainingInventory(null);
+          }
+        } catch (err) {
+          setTruckInventory([]);
+        }
+      } else {
+        setTruckInventory([]);
+      }
+    };
+    loadTruckInventory();
+  }, [form.truckId]);
 
   const resetForm = () => {
     setForm((f) => ({
@@ -297,11 +321,13 @@ export function Sales() {
               required
             >
               <option value="">{t('sales.selectProduct')}</option>
-              {products?.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} {p.variety ? `(${p.variety})` : ''}
-                </option>
-              ))}
+              {products
+                ?.filter((p) => truckInventory.some((inv) => inv.productId === p.id))
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} {p.variety ? `(${p.variety})` : ''}
+                  </option>
+                ))}
             </select>
           </div>
 
