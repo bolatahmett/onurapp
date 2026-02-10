@@ -8,6 +8,13 @@ export const IpcChannels = {
   TRUCK_CLOSE: 'truck:close',
   TRUCK_DELETE: 'truck:delete',
 
+  // Truck Inventory
+  TRUCK_INVENTORY_GET: 'truck:getInventory',
+  TRUCK_INVENTORY_ADD: 'truck:addInventory',
+  TRUCK_INVENTORY_UPDATE: 'truck:updateInventory',
+  TRUCK_INVENTORY_GET_REMAINING: 'truck:getRemainingQuantity',
+  TRUCK_INVENTORY_CLEAR: 'truck:clearInventory',
+
   // Product
   PRODUCT_GET_ALL: 'product:getAll',
   PRODUCT_GET_ACTIVE: 'product:getActive',

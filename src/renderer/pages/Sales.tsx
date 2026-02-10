@@ -12,7 +12,7 @@ import type {
   Customer,
   CreateSaleDto,
 } from '@shared/types/entities';
-import { UnitType } from '@shared/types/enums';
+import { UnitType, PaymentStatus } from '@shared/types/enums';
 
 export function Sales() {
   const { t } = useTranslation();
@@ -26,6 +26,7 @@ export function Sales() {
   const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
   const [assignCustomerId, setAssignCustomerId] = useState('');
   const [filterTruck, setFilterTruck] = useState('');
+  const [remainingInventory, setRemainingInventory] = useState<number | null>(null);
 
   const qtyRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +38,7 @@ export function Sales() {
     quantity: '',
     unitPrice: '',
     notes: '',
+    autoInvoice: false,
   });
 
   // Auto-select first active truck
@@ -46,6 +48,23 @@ export function Sales() {
     }
   }, [activeTrucks]);
 
+  // Fetch remaining inventory when truck or product changes
+  useEffect(() => {
+    const fetchRemainingInventory = async () => {
+      if (form.truckId && form.productId) {
+        try {
+          const remaining = await window.api.truck.getRemainingQuantity(form.truckId, form.productId);
+          setRemainingInventory(remaining.remaining);
+        } catch (err) {
+          setRemainingInventory(null);
+        }
+      } else {
+        setRemainingInventory(null);
+      }
+    };
+    fetchRemainingInventory();
+  }, [form.truckId, form.productId]);
+
   const resetForm = () => {
     setForm((f) => ({
       ...f,
@@ -54,7 +73,9 @@ export function Sales() {
       quantity: '',
       unitPrice: '',
       notes: '',
+      autoInvoice: false,
     }));
+    setRemainingInventory(null);
   };
 
   const totalPrice = (parseFloat(form.quantity) || 0) * (parseFloat(form.unitPrice) || 0);
@@ -70,6 +91,7 @@ export function Sales() {
         quantity: parseFloat(form.quantity),
         unitPrice: parseFloat(form.unitPrice),
         notes: form.notes || undefined,
+        autoInvoice: form.autoInvoice,
       };
       await window.api.sale.create(dto);
       refresh();
@@ -117,6 +139,21 @@ export function Sales() {
     ? (sales ?? []).filter((s) => s.truckId === filterTruck)
     : (sales ?? []);
 
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case PaymentStatus.PAID:
+        return 'bg-green-100 text-green-800';
+      case PaymentStatus.PARTIAL:
+        return 'bg-yellow-100 text-yellow-800';
+      case PaymentStatus.UNPAID:
+        return 'bg-red-100 text-red-800';
+      case PaymentStatus.OVERDUE:
+        return 'bg-red-200 text-red-900';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const columns = [
     {
       key: 'select',
@@ -148,6 +185,22 @@ export function Sales() {
       header: t('sales.totalPrice'),
       render: (item: SaleWithDetails) => (
         <span className="font-semibold">{formatCurrency(item.totalPrice)}</span>
+      ),
+    },
+    {
+      key: 'paymentStatus',
+      header: t('sales.paymentStatus'),
+      render: (item: SaleWithDetails) => (
+        <div className="flex flex-col gap-1">
+          <span className={`px-2 py-1 rounded text-xs font-medium ${getPaymentStatusColor(item.paymentStatus)}`}>
+            {t(`invoices.paymentStatus.${item.paymentStatus}`)}
+          </span>
+          {item.paidAmount > 0 && (
+            <span className="text-xs text-gray-600">
+              {t('invoices.paidAmount')}: {formatCurrency(item.paidAmount)}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -252,6 +305,17 @@ export function Sales() {
             </select>
           </div>
 
+          {/* Remaining Inventory Display */}
+          {remainingInventory !== null && (
+            <div className={`p-2 rounded-lg text-sm ${
+              remainingInventory > 0 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {t('sales.remainingInventory')}: <strong>{remainingInventory}</strong>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-1">{t('sales.unitType')} *</label>
             <div className="flex gap-2">
@@ -329,6 +393,20 @@ export function Sales() {
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
+          </div>
+
+          {/* Auto-Invoice Checkbox */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="autoInvoice"
+              checked={form.autoInvoice}
+              onChange={(e) => setForm({ ...form, autoInvoice: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <label htmlFor="autoInvoice" className="text-sm font-medium cursor-pointer">
+              {t('sales.autoInvoice')}
+            </label>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

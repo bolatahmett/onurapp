@@ -68,7 +68,12 @@
       "CLOSED": "Closed"
     },
     "confirmClose": "Are you sure you want to close this truck?",
-    "totalSales": "Total Sales"
+    "totalSales": "Total Sales",
+    "inventory": "Inventory",
+    "addProduct": "Add Product",
+    "product": "Product",
+    "quantity": "Quantity",
+    "selectProduct": "Select product"
   },
   "sales": {
     "title": "Sales",
@@ -93,7 +98,11 @@
     "unitTypes": {
       "PALLET": "Pallet",
       "CRATE": "Crate"
-    }
+    },
+    "paymentStatus": "Payment Status",
+    "paidAmount": "Paid Amount",
+    "remainingInventory": "Remaining Inventory",
+    "autoInvoice": "Auto-create Invoice"
   },
   "products": {
     "title": "Product Management",

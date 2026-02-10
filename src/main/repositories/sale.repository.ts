@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BaseRepository } from './base.repository';
 import { Sale, SaleWithDetails, CreateSaleDto, UpdateSaleDto } from '../../shared/types/entities';
-import { UnitType, DiscountType } from '../../shared/types/enums';
+import { UnitType, DiscountType, PaymentStatus } from '../../shared/types/enums';
 
 export class SaleRepository extends BaseRepository {
   private readonly selectWithDetails = `
@@ -62,15 +62,19 @@ export class SaleRepository extends BaseRepository {
     const id = uuidv4();
     const now = this.now();
     const totalPrice = (dto.quantity * dto.unitPrice) - (dto.discountAmount ?? 0);
+    const paidAmount = dto.paidAmount ?? 0;
+    let paymentStatus = PaymentStatus.UNPAID;
+    if (paidAmount >= totalPrice && totalPrice > 0) paymentStatus = PaymentStatus.PAID;
+    else if (paidAmount > 0) paymentStatus = PaymentStatus.PARTIAL;
 
     this.execute(
       `INSERT INTO sales (id, truck_id, product_id, customer_id, unit_type, quantity, unit_price, total_price, 
-                         discount_type, discount_amount, discount_reason, seller_name, payment_method, sale_date, notes, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                         discount_type, discount_amount, discount_reason, seller_name, payment_method, payment_status, paid_amount, auto_invoice, sale_date, notes, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, dto.truckId, dto.productId, dto.customerId ?? null,
        dto.unitType, dto.quantity, dto.unitPrice, totalPrice,
        dto.discountType ?? DiscountType.FIXED, dto.discountAmount ?? 0, dto.discountReason ?? null,
-       dto.sellerName ?? null, dto.paymentMethod ?? null, now,
+       dto.sellerName ?? null, dto.paymentMethod ?? null, paymentStatus, paidAmount, dto.autoInvoice ? 1 : 0, now,
        dto.notes ?? null, now, now]
     );
 
@@ -153,6 +157,9 @@ export class SaleRepository extends BaseRepository {
       discountReason: row.discount_reason,
       sellerName: row.seller_name,
       paymentMethod: row.payment_method,
+      paymentStatus: row.payment_status ?? 'UNPAID',
+      paidAmount: row.paid_amount ?? 0,
+      autoInvoice: row.auto_invoice === 1,
       saleDate: row.sale_date,
       notes: row.notes,
       createdAt: row.created_at,
@@ -176,6 +183,9 @@ export class SaleRepository extends BaseRepository {
       discountReason: row.discount_reason,
       sellerName: row.seller_name,
       paymentMethod: row.payment_method,
+      paymentStatus: row.payment_status ?? 'UNPAID',
+      paidAmount: row.paid_amount ?? 0,
+      autoInvoice: row.auto_invoice === 1,
       saleDate: row.sale_date,
       notes: row.notes,
       createdAt: row.created_at,
@@ -184,6 +194,7 @@ export class SaleRepository extends BaseRepository {
       productName: row.product_name,
       customerName: row.customer_name,
       invoiceNumber: row.invoice_number,
+      remainingInventory: row.remaining_inventory ?? 0,
     };
   }
 }

@@ -68,7 +68,12 @@
       "CLOSED": "Kapalı"
     },
     "confirmClose": "Bu TIR'ı kapatmak istediğinize emin misiniz?",
-    "totalSales": "Toplam Satış"
+    "totalSales": "Toplam Satış",
+    "inventory": "Envanter",
+    "addProduct": "Ürün Ekle",
+    "product": "Ürün",
+    "quantity": "Miktar",
+    "selectProduct": "Ürün seçin"
   },
   "sales": {
     "title": "Satışlar",
@@ -93,7 +98,11 @@
     "unitTypes": {
       "PALLET": "Palet",
       "CRATE": "Kasa"
-    }
+    },
+    "paymentStatus": "Ödeme Durumu",
+    "paidAmount": "Ödenen Tutar",
+    "remainingInventory": "Kalan Envanter",
+    "autoInvoice": "Otomatik Fatura Oluştur"
   },
   "products": {
     "title": "Ürün Yönetimi",

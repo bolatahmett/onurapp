@@ -74,6 +74,9 @@ export interface Sale {
   discountReason: string | null;
   sellerName: string | null;
   paymentMethod: string | null;
+  paymentStatus: PaymentStatus;
+  paidAmount: number;
+  autoInvoice: boolean;
   saleDate: string;
   notes: string | null;
   createdAt: string;
@@ -85,6 +88,7 @@ export interface SaleWithDetails extends Sale {
   productName: string;
   customerName: string | null;
   invoiceNumber: string | null;
+  remainingInventory: number;
 }
 
 export interface Invoice {
@@ -132,6 +136,16 @@ export interface Setting {
 // ============================================================================
 // NEW ENTITIES
 // ============================================================================
+
+export interface TruckInventory {
+  id: string;
+  truckId: string;
+  productId: string;
+  quantity: number;
+  unitType: UnitType;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface InvoiceLineItem {
   id: string;
@@ -221,6 +235,17 @@ export interface UpdateProductDto {
   isActive?: boolean;
 }
 
+export interface CreateTruckInventoryDto {
+  productId: string;
+  quantity: number;
+  unitType: UnitType;
+}
+
+export interface UpdateTruckInventoryDto {
+  quantity?: number;
+  unitType?: UnitType;
+}
+
 export interface CreateCustomerDto {
   name: string;
   phone?: string;
@@ -261,9 +286,10 @@ export interface CreateSaleDto {
   discountAmount?: number;
   discountReason?: string;
   sellerName?: string;
-  paymentMethod?: string;
+  paymentMethod?: PaymentMethod;
   notes?: string;
-  createInvoice?: boolean;
+  autoInvoice?: boolean;
+  paidAmount?: number;
 }
 
 export interface UpdateSaleDto {
@@ -275,6 +301,8 @@ export interface UpdateSaleDto {
   discountType?: DiscountType;
   discountAmount?: number;
   discountReason?: string;
+  paymentStatus?: PaymentStatus;
+  paidAmount?: number;
   notes?: string;
 }
 

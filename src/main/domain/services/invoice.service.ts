@@ -31,6 +31,7 @@ import { PaymentRepository } from '../../repositories/payment.repository';
 import { CustomerRepository } from '../../repositories/customer.repository';
 import { ProductRepository } from '../../repositories/product.repository';
 import { TruckRepository } from '../../repositories/truck.repository';
+import { TruckInventoryRepository } from '../../repositories/truck-inventory.repository';
 
 export class InvoiceService {
   constructor(
@@ -42,7 +43,8 @@ export class InvoiceService {
     private paymentRepo: PaymentRepository,
     private customerRepo: CustomerRepository,
     private productRepo: ProductRepository,
-    private truckRepo: TruckRepository
+    private truckRepo: TruckRepository,
+    private truckInventoryRepo: TruckInventoryRepository
   ) {}
 
   /**
@@ -384,7 +386,7 @@ export class InvoiceService {
   }
 
   /**
-   * Enrich a sale with customer/product/truck details
+   * Enrich a sale with customer/product/truck details and remaining inventory
    */
   private enrichSaleWithDetails(sale: Sale): SaleWithDetails {
     const truck = this.truckRepo.getById(sale.truckId);
@@ -392,12 +394,17 @@ export class InvoiceService {
     const customer = sale.customerId ? this.customerRepo.getById(sale.customerId) : null;
     const invoice = sale.invoiceId ? this.invoiceRepo.getById(sale.invoiceId) : null;
 
+    // Calculate remaining inventory in truck for this product
+    const inventory = this.truckInventoryRepo.getByTruckAndProduct(sale.truckId, sale.productId);
+    const remainingInventory = inventory ? inventory.quantity : 0;
+
     return {
       ...sale,
       truckPlateNumber: truck?.plateNumber || '',
       productName: product?.name || '',
       customerName: customer?.name || null,
       invoiceNumber: invoice?.invoiceNumber || null,
+      remainingInventory,
     };
   }
 }

@@ -15,6 +15,7 @@ import {
   CustomerRepository,
   ProductRepository,
   TruckRepository,
+  TruckInventoryRepository,
 } from '../repositories';
 
 export function registerInvoiceIpc(): void {
@@ -28,6 +29,7 @@ export function registerInvoiceIpc(): void {
   const customerRepo = new CustomerRepository();
   const productRepo = new ProductRepository();
   const truckRepo = new TruckRepository();
+  const truckInventoryRepo = new TruckInventoryRepository();
 
   // Initialize domain services with repositories
   const invoiceService = new InvoiceService(
@@ -39,7 +41,8 @@ export function registerInvoiceIpc(): void {
     paymentRepo,
     customerRepo,
     productRepo,
-    truckRepo
+    truckRepo,
+    truckInventoryRepo
   );
 
   const paymentService = new PaymentService(

@@ -11,6 +11,7 @@ export { CustomerMergeRepository } from './customer-merge.repository';
 export { SaleRepository } from './sale.repository';
 export { ProductRepository } from './product.repository';
 export { TruckRepository } from './truck.repository';
+export { TruckInventoryRepository } from './truck-inventory.repository';
 export { InvoiceNumberSequenceRepository } from './invoice-sequence.repository';
 export { AuditLogRepository } from './audit-log.repository';
 export { InvoiceLineItemRepository } from './invoice-line-item.repository';
