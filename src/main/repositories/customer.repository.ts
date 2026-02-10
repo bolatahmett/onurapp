@@ -5,26 +5,26 @@ import { CustomerType } from '../../shared/types/enums';
 
 export class CustomerRepository extends BaseRepository {
   getAll(): Customer[] {
-    return this.queryAll('SELECT * FROM customers ORDER BY name ASC').map(this.mapRow);
+    return this.queryAll('SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY name ASC').map(this.mapRow);
   }
 
   getActive(): Customer[] {
-    return this.queryAll('SELECT * FROM customers WHERE is_active = 1 ORDER BY name ASC').map(this.mapRow);
+    return this.queryAll('SELECT * FROM customers WHERE is_active = 1 AND deleted_at IS NULL ORDER BY name ASC').map(this.mapRow);
   }
 
   getTemporary(): Customer[] {
-    return this.queryAll('SELECT * FROM customers WHERE is_temporary = 1 AND is_active = 1 ORDER BY name ASC').map(
+    return this.queryAll('SELECT * FROM customers WHERE is_temporary = 1 AND is_active = 1 AND deleted_at IS NULL ORDER BY name ASC').map(
       this.mapRow
     );
   }
 
   getById(id: string): Customer | null {
-    const row = this.queryOne('SELECT * FROM customers WHERE id = ?', [id]);
+    const row = this.queryOne('SELECT * FROM customers WHERE id = ? AND deleted_at IS NULL', [id]);
     return row ? this.mapRow(row) : null;
   }
 
   getByCustomerType(customerType: CustomerType): Customer[] {
-    return this.queryAll('SELECT * FROM customers WHERE customer_type = ? ORDER BY name ASC', [customerType]).map(
+    return this.queryAll('SELECT * FROM customers WHERE customer_type = ? AND deleted_at IS NULL ORDER BY name ASC', [customerType]).map(
       this.mapRow
     );
   }
@@ -89,7 +89,8 @@ export class CustomerRepository extends BaseRepository {
   }
 
   delete(id: string): boolean {
-    this.execute('DELETE FROM customers WHERE id = ?', [id]);
+    const now = this.now();
+    this.execute('UPDATE customers SET deleted_at = ? WHERE id = ?', [now, id]);
     return this.changes() > 0;
   }
 
@@ -111,6 +112,7 @@ export class CustomerRepository extends BaseRepository {
       isActive: row.is_active === 1,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      deletedAt: row.deleted_at,
     };
   }
 }

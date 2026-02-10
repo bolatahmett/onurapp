@@ -5,6 +5,8 @@ import { up as migration003 } from './003_audit_and_sequences';
 import { up as migration004 } from './004_enhanced_entities';
 import { up as migration005 } from './005_sale_inventory';
 import { up as migration006 } from './006_auth_system';
+import { up as migration007 } from './007_financial_security';
+import { up as migration008 } from './008_fix_audit_schema';
 import { saveDatabase } from '../connection';
 
 interface Migration {
@@ -20,6 +22,8 @@ const migrations: Migration[] = [
   { version: 4, name: 'enhanced_entities', up: migration004 },
   { version: 5, name: 'sale_inventory', up: migration005 },
   { version: 6, name: 'auth_system', up: migration006 },
+  { version: 7, name: 'financial_security', up: migration007 },
+  { version: 8, name: 'fix_audit_schema', up: migration008 },
 ];
 
 export function runMigrations(db: SqlJsDatabase): void {

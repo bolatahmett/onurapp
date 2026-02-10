@@ -11,6 +11,7 @@ import { Invoices } from './pages/Invoices';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
+import { AuditLogs } from './pages/AuditLogs';
 
 export function App() {
   return (
@@ -31,6 +32,7 @@ export function App() {
 
             <Route element={<AdminRoute />}>
               <Route path="/users" element={<Users />} />
+              <Route path="/audit" element={<AuditLogs />} />
             </Route>
           </Route>
         </Route>

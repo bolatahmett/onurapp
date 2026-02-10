@@ -15,6 +15,7 @@ export class SaleRepository extends BaseRepository {
     JOIN products p ON s.product_id = p.id
     LEFT JOIN customers c ON s.customer_id = c.id
     LEFT JOIN invoices i ON s.invoice_id = i.id
+    WHERE s.deleted_at IS NULL
   `;
 
   getAll(): SaleWithDetails[] {
@@ -23,38 +24,38 @@ export class SaleRepository extends BaseRepository {
 
   getByTruck(truckId: string): SaleWithDetails[] {
     return this.queryAll(
-      `${this.selectWithDetails} WHERE s.truck_id = ? ORDER BY s.sale_date DESC`,
+      `${this.selectWithDetails} AND s.truck_id = ? ORDER BY s.sale_date DESC`,
       [truckId]
     ).map(this.mapRowWithDetails);
   }
 
   getByCustomer(customerId: string): SaleWithDetails[] {
     return this.queryAll(
-      `${this.selectWithDetails} WHERE s.customer_id = ? ORDER BY s.sale_date DESC`,
+      `${this.selectWithDetails} AND s.customer_id = ? ORDER BY s.sale_date DESC`,
       [customerId]
     ).map(this.mapRowWithDetails);
   }
 
   getUnassigned(): SaleWithDetails[] {
     return this.queryAll(
-      `${this.selectWithDetails} WHERE s.customer_id IS NULL ORDER BY s.sale_date DESC`
+      `${this.selectWithDetails} AND s.customer_id IS NULL ORDER BY s.sale_date DESC`
     ).map(this.mapRowWithDetails);
   }
 
   getUninvoiced(customerId?: string): SaleWithDetails[] {
     if (customerId) {
       return this.queryAll(
-        `${this.selectWithDetails} WHERE s.invoice_id IS NULL AND s.customer_id = ? ORDER BY s.sale_date DESC`,
+        `${this.selectWithDetails} AND s.invoice_id IS NULL AND s.customer_id = ? ORDER BY s.sale_date DESC`,
         [customerId]
       ).map(this.mapRowWithDetails);
     }
     return this.queryAll(
-      `${this.selectWithDetails} WHERE s.invoice_id IS NULL ORDER BY s.sale_date DESC`
+      `${this.selectWithDetails} AND s.invoice_id IS NULL ORDER BY s.sale_date DESC`
     ).map(this.mapRowWithDetails);
   }
 
   getById(id: string): SaleWithDetails | null {
-    const row = this.queryOne(`${this.selectWithDetails} WHERE s.id = ?`, [id]);
+    const row = this.queryOne(`${this.selectWithDetails} AND s.id = ?`, [id]);
     return row ? this.mapRowWithDetails(row) : null;
   }
 
@@ -72,10 +73,10 @@ export class SaleRepository extends BaseRepository {
                          discount_type, discount_amount, discount_reason, seller_name, payment_method, payment_status, paid_amount, auto_invoice, sale_date, notes, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, dto.truckId, dto.productId, dto.customerId ?? null,
-       dto.unitType, dto.quantity, dto.unitPrice, totalPrice,
-       dto.discountType ?? DiscountType.FIXED, dto.discountAmount ?? 0, dto.discountReason ?? null,
-       dto.sellerName ?? null, dto.paymentMethod ?? null, paymentStatus, paidAmount, dto.autoInvoice ? 1 : 0, now,
-       dto.notes ?? null, now, now]
+        dto.unitType, dto.quantity, dto.unitPrice, totalPrice,
+        dto.discountType ?? DiscountType.FIXED, dto.discountAmount ?? 0, dto.discountReason ?? null,
+        dto.sellerName ?? null, dto.paymentMethod ?? null, paymentStatus, paidAmount, dto.autoInvoice ? 1 : 0, now,
+        dto.notes ?? null, now, now]
     );
 
     const row = this.queryOne('SELECT * FROM sales WHERE id = ?', [id]);
@@ -137,7 +138,8 @@ export class SaleRepository extends BaseRepository {
   }
 
   delete(id: string): boolean {
-    this.execute('DELETE FROM sales WHERE id = ?', [id]);
+    const now = this.now();
+    this.execute('UPDATE sales SET deleted_at = ? WHERE id = ?', [now, id]);
     return this.changes() > 0;
   }
 
@@ -164,6 +166,7 @@ export class SaleRepository extends BaseRepository {
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      deletedAt: row.deleted_at,
     };
   }
 
@@ -190,6 +193,7 @@ export class SaleRepository extends BaseRepository {
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      deletedAt: row.deleted_at,
       truckPlateNumber: row.truck_plate_number,
       productName: row.product_name,
       customerName: row.customer_name,

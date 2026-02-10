@@ -12,8 +12,8 @@ import { InvoiceNumberSequenceRepository } from '../repositories/invoice-sequenc
 import { InvoiceLineItemRepository } from '../repositories/invoice-line-item.repository';
 import { SaleRepository } from '../repositories/sale.repository';
 import { CustomerRepository } from '../repositories/customer.repository';
-import { AuditLogRepository } from '../repositories/audit-log.repository';
 import { PaymentRepository } from '../repositories/payment.repository';
+import { auditService } from './AuditService';
 
 export class InvoiceService {
   private invoiceRepo = new InvoiceRepository();
@@ -21,7 +21,7 @@ export class InvoiceService {
   private lineItemRepo = new InvoiceLineItemRepository();
   private saleRepo = new SaleRepository();
   private customerRepo = new CustomerRepository();
-  private auditRepo = new AuditLogRepository();
+  // private auditRepo = new AuditLogRepository(); // Replaced by AuditService
   private paymentRepo = new PaymentRepository();
 
   /**
@@ -39,7 +39,7 @@ export class InvoiceService {
 
     // Get all sales and validate
     const sales = saleIds.map(id => this.saleRepo.getById(id)).filter(s => s !== null);
-    
+
     if (sales.length !== saleIds.length) {
       throw new Error('Some sales not found');
     }
@@ -76,12 +76,12 @@ export class InvoiceService {
     this.invoiceRepo.updateTotals(invoice.id, totalAmount, taxRate);
 
     // Log creation
-    this.auditRepo.create('Invoice', invoice.id, AuditAction.CREATE, null, {
+    auditService.log('Invoice', invoice.id, 'CREATE', null, JSON.stringify({
       invoiceNumber,
       customerId,
       saleCount: sales.length,
       totalAmount,
-    });
+    }));
 
     return this.invoiceRepo.getById(invoice.id)!;
   }
@@ -136,7 +136,11 @@ export class InvoiceService {
     const updated = this.invoiceRepo.update(id, dto);
 
     if (updated && dto.status === InvoiceStatus.ISSUED) {
-      this.auditRepo.create('Invoice', id, AuditAction.ISSUE, oldValues, { status: InvoiceStatus.ISSUED });
+      // Locking is handled by the status change to ISSUED mostly, but we can explicitly set isLocked if needed
+      // For now, let's assume ISSUED implies locked for editing logic
+      auditService.log('Invoice', id, 'ISSUE', null, JSON.stringify({ status: InvoiceStatus.ISSUED }));
+    } else if (updated) {
+      auditService.log('Invoice', id, 'UPDATE', null, JSON.stringify(dto));
     }
 
     return updated;
@@ -165,7 +169,11 @@ export class InvoiceService {
         notes: dto.paymentNotes,
       });
 
-      this.auditRepo.create('Invoice', id, AuditAction.MARK_PAID, { status: invoice.status }, { status: InvoiceStatus.PAID });
+      // Log payment
+      auditService.log('Invoice', id, 'MARK_PAID', userId || null, JSON.stringify({
+        status: InvoiceStatus.PAID,
+        method: dto.paymentMethod
+      }));
     }
 
     return updated;
@@ -185,7 +193,7 @@ export class InvoiceService {
     const updated = this.invoiceRepo.cancel(id, reason, userId);
 
     if (updated) {
-      this.auditRepo.create('Invoice', id, AuditAction.CANCEL, { status: invoice.status }, { reason });
+      auditService.log('Invoice', id, 'CANCEL', userId || null, JSON.stringify({ reason }));
     }
 
     return updated;
@@ -213,7 +221,12 @@ export class InvoiceService {
     // Delete line items
     this.lineItemRepo.deleteByInvoiceId(id);
 
-    return this.invoiceRepo.delete(id);
+    // Soft delete
+    const success = this.invoiceRepo.delete(id); // Ensure repository handles soft delete or we change it here
+    if (success) {
+      auditService.log('Invoice', id, 'DELETE', null, 'Soft delete');
+    }
+    return success;
   }
 
   /**
@@ -396,15 +409,16 @@ export class InvoiceService {
 
     if (isFullyPaid) {
       this.invoiceRepo.markAsPaid(invoiceId, method as any, undefined);
-      this.auditRepo.create('Invoice', invoiceId, AuditAction.MARK_PAID,
-        { status: invoice.status, totalPaid: currentPaid },
-        { status: InvoiceStatus.PAID, totalPaid: newTotalPaid }
-      );
+      auditService.log('Invoice', invoiceId, 'MARK_PAID', null, JSON.stringify({
+        status: InvoiceStatus.PAID,
+        totalPaid: newTotalPaid
+      }));
     } else {
-      this.auditRepo.create('Invoice', invoiceId, AuditAction.PARTIAL_PAYMENT,
-        { totalPaid: currentPaid, remainingBalance: currentRemaining },
-        { totalPaid: newTotalPaid, remainingBalance }
-      );
+      auditService.log('Invoice', invoiceId, 'PARTIAL_PAYMENT', null, JSON.stringify({
+        amount,
+        newTotalPaid,
+        remainingBalance
+      }));
     }
 
     return { payment, remainingBalance, isFullyPaid };

@@ -11,6 +11,7 @@
     "users": "Управление Пользователями",
     "invoices": "Счета",
     "reports": "Отчеты",
+    "audit": "Журнал Аудита",
     "settings": "Параметры"
   },
   "common": {
@@ -209,5 +210,16 @@
     "TRANSFER": "Перевод",
     "CHECK": "Чек",
     "CREDIT_CARD": "Кредитная карта"
+  },
+  "audit": {
+    "title": "Журнал Аудита",
+    "entityType": "Тип Объекта",
+    "entityId": "ID Объекта",
+    "action": "Действие",
+    "details": "Детали",
+    "date": "Дата",
+    "searchPlaceholder": "Поиск по ID...",
+    "page": "Страница",
+    "records": "записей"
   }
 }

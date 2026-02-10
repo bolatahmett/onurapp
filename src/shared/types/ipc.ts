@@ -125,6 +125,9 @@ export const IpcChannels = {
   AUTH_UPDATE_USER: 'auth:updateUser',
   AUTH_DELETE_USER: 'auth:deleteUser',
   AUTH_GET_ALL_USERS: 'auth:getAllUsers',
+
+  // Audit
+  AUDIT_GET_LOGS: 'audit:getLogs',
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];

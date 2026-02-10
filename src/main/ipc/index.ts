@@ -8,6 +8,7 @@ import { registerExportIpc } from './export.ipc';
 import { registerBackupIpc } from './backup.ipc';
 import { registerSettingsIpc } from './settings.ipc';
 import { registerAuthIpc } from './auth';
+import { registerAuditIpc } from './audit';
 
 export function registerAllIpc(): void {
   registerTruckIpc();
@@ -20,4 +21,5 @@ export function registerAllIpc(): void {
   registerBackupIpc();
   registerSettingsIpc();
   registerAuthIpc();
+  registerAuditIpc();
 }

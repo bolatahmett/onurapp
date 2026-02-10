@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  ClipboardList,
 } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useAuthStore } from '../../store/authStore';
@@ -25,6 +26,7 @@ const navItems = [
   { path: '/invoices', icon: FileText, labelKey: 'nav.invoices' },
   { path: '/reports', icon: BarChart3, labelKey: 'nav.reports' },
   { path: '/users', icon: Shield, labelKey: 'nav.users', adminOnly: true },
+  { path: '/audit', icon: ClipboardList, labelKey: 'nav.audit', adminOnly: true },
   { path: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
 

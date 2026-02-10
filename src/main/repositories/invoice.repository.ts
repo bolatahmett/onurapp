@@ -5,31 +5,31 @@ import { InvoiceStatus, PaymentMethod } from '../../shared/types/enums';
 
 export class InvoiceRepository extends BaseRepository {
   getAll(): Invoice[] {
-    return this.queryAll('SELECT * FROM invoices ORDER BY created_at DESC').map(this.mapRow);
+    return this.queryAll('SELECT * FROM invoices WHERE deleted_at IS NULL ORDER BY created_at DESC').map(this.mapRow);
   }
 
   getById(id: string): Invoice | null {
-    const row = this.queryOne('SELECT * FROM invoices WHERE id = ?', [id]);
+    const row = this.queryOne('SELECT * FROM invoices WHERE id = ? AND deleted_at IS NULL', [id]);
     return row ? this.mapRow(row) : null;
   }
 
   getByCustomerId(customerId: string): Invoice[] {
     return this.queryAll(
-      'SELECT * FROM invoices WHERE customer_id = ? ORDER BY created_at DESC',
+      'SELECT * FROM invoices WHERE customer_id = ? AND deleted_at IS NULL ORDER BY created_at DESC',
       [customerId]
     ).map(this.mapRow);
   }
 
   getByStatus(status: InvoiceStatus): Invoice[] {
     return this.queryAll(
-      'SELECT * FROM invoices WHERE status = ? ORDER BY created_at DESC',
+      'SELECT * FROM invoices WHERE status = ? AND deleted_at IS NULL ORDER BY created_at DESC',
       [status]
     ).map(this.mapRow);
   }
 
   getOutstandingInvoices(): Invoice[] {
     return this.queryAll(
-      `SELECT * FROM invoices WHERE status = ? OR status = ? ORDER BY due_date ASC`,
+      `SELECT * FROM invoices WHERE (status = ? OR status = ?) AND deleted_at IS NULL ORDER BY due_date ASC`,
       [InvoiceStatus.DRAFT, InvoiceStatus.ISSUED]
     ).map(this.mapRow);
   }
@@ -42,7 +42,7 @@ export class InvoiceRepository extends BaseRepository {
                             status, issue_date, due_date, notes, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, invoiceNumber, customerId, 0, 0, 0, dto.taxRate ?? 0, 0, InvoiceStatus.DRAFT,
-       null, dto.dueDate ?? null, dto.notes ?? null, now, now]
+        null, dto.dueDate ?? null, dto.notes ?? null, now, now]
     );
     return this.getById(id)!;
   }
@@ -100,7 +100,8 @@ export class InvoiceRepository extends BaseRepository {
   }
 
   delete(id: string): boolean {
-    this.execute('DELETE FROM invoices WHERE id = ?', [id]);
+    const now = this.now();
+    this.execute('UPDATE invoices SET deleted_at = ? WHERE id = ?', [now, id]);
     return this.changes() > 0;
   }
 
@@ -145,6 +146,8 @@ export class InvoiceRepository extends BaseRepository {
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      deletedAt: row.deleted_at,
+      isLocked: Boolean(row.is_locked),
     };
   }
 }

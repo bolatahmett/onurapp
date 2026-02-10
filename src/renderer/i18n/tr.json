@@ -11,6 +11,7 @@
     "users": "Kullanıcı Yönetimi",
     "invoices": "Faturalar",
     "reports": "Raporlar",
+    "audit": "Denetim Kayıtları",
     "settings": "Ayarlar"
   },
   "common": {
@@ -206,5 +207,16 @@
     "TRANSFER": "Havale",
     "CHECK": "Çek",
     "CREDIT_CARD": "Kredi Kartı"
+  },
+  "audit": {
+    "title": "Denetim Kayıtları",
+    "entityType": "Varlık Türü",
+    "entityId": "Varlık ID",
+    "action": "İşlem",
+    "details": "Detaylar",
+    "date": "Tarih",
+    "searchPlaceholder": "ID ile ara...",
+    "page": "Sayfa",
+    "records": "kayıt"
   }
 }

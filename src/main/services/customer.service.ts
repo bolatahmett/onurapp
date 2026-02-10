@@ -2,16 +2,15 @@ import { CustomerRepository } from '../repositories/customer.repository';
 import { SaleRepository } from '../repositories/sale.repository';
 import { InvoiceRepository } from '../repositories/invoice.repository';
 import { CustomerMergeRepository } from '../repositories/customer-merge.repository';
-import { AuditLogRepository } from '../repositories/audit-log.repository';
 import { Customer, CreateCustomerDto, UpdateCustomerDto, MergeCustomerDto, CustomerHistoryEntry } from '../../shared/types/entities';
-import { CustomerType, AuditAction } from '../../shared/types/enums';
+import { CustomerType } from '../../shared/types/enums';
+import { auditService } from './AuditService';
 
 export class CustomerService {
   private customerRepo = new CustomerRepository();
   private saleRepo = new SaleRepository();
   private invoiceRepo = new InvoiceRepository();
   private mergeRepo = new CustomerMergeRepository();
-  private auditRepo = new AuditLogRepository();
 
   getAll(): Customer[] {
     return this.customerRepo.getAll();
@@ -37,13 +36,19 @@ export class CustomerService {
     if (!dto.name?.trim()) {
       throw new Error('Customer name is required');
     }
-    return this.customerRepo.create(dto);
+    const customer = this.customerRepo.create(dto);
+    auditService.log('Customer', customer.id, 'CREATE', null, JSON.stringify({ name: dto.name }));
+    return customer;
   }
 
   update(id: string, dto: UpdateCustomerDto): Customer | null {
     const customer = this.customerRepo.getById(id);
     if (!customer) throw new Error('Customer not found');
-    return this.customerRepo.update(id, dto);
+    const updated = this.customerRepo.update(id, dto);
+    if (updated) {
+      auditService.log('Customer', id, 'UPDATE', null, JSON.stringify(dto));
+    }
+    return updated;
   }
 
   /**
@@ -80,10 +85,10 @@ export class CustomerService {
     this.customerRepo.update(dto.sourceCustomerId, { isActive: false });
 
     // Log merge action
-    this.auditRepo.create('Customer', dto.sourceCustomerId, AuditAction.MERGE, 
-      { name: sourceCustomer.name }, 
-      { mergedInto: dto.targetCustomerId }
-    );
+    auditService.log('Customer', dto.sourceCustomerId, 'MERGE', null, JSON.stringify({
+      sourceName: sourceCustomer.name,
+      mergedInto: dto.targetCustomerId,
+    }));
 
     return targetCustomer;
   }
@@ -121,10 +126,10 @@ export class CustomerService {
       .filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED')
       .reduce((sum, i) => sum + i.netTotal, 0);
 
-    const lastPurchase = sales.length > 0 
-      ? sales.reduce((latest, s) => 
-          new Date(s.saleDate) > new Date(latest.saleDate) ? s : latest
-        ).saleDate 
+    const lastPurchase = sales.length > 0
+      ? sales.reduce((latest, s) =>
+        new Date(s.saleDate) > new Date(latest.saleDate) ? s : latest
+      ).saleDate
       : null;
 
     return {
@@ -138,6 +143,10 @@ export class CustomerService {
   }
 
   delete(id: string): boolean {
-    return this.customerRepo.delete(id);
+    const success = this.customerRepo.delete(id);
+    if (success) {
+      auditService.log('Customer', id, 'DELETE', null, 'Soft delete');
+    }
+    return success;
   }
 }

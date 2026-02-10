@@ -192,6 +192,12 @@ const api = {
     deleteUser: (id: string) => ipcRenderer.invoke(IpcChannels.AUTH_DELETE_USER, id),
     getAllUsers: () => ipcRenderer.invoke(IpcChannels.AUTH_GET_ALL_USERS),
   },
+
+  // Audit
+  audit: {
+    getLogs: (params?: { entityType?: string; entityId?: string; limit?: number; offset?: number }) =>
+      ipcRenderer.invoke(IpcChannels.AUDIT_GET_LOGS, params),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

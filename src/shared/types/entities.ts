@@ -15,8 +15,7 @@ import {
 // EXISTING ENTITIES (Enhanced)
 // ============================================================================
 
-export interface Truck {
-  id: string;
+export interface Truck extends BaseEntity {
   plateNumber: string;
   driverName: string | null;
   driverPhone: string | null;
@@ -24,12 +23,9 @@ export interface Truck {
   departureDate: string | null;
   status: TruckStatus;
   notes: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Product {
-  id: string;
+export interface Product extends BaseEntity {
   name: string;
   variety: string | null;
   defaultUnitType: UnitType;
@@ -37,12 +33,9 @@ export interface Product {
   category: string | null;
   basePrice: number | null;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Customer {
-  id: string;
+export interface Customer extends BaseEntity {
   name: string;
   phone: string | null;
   address: string | null;
@@ -56,12 +49,9 @@ export interface Customer {
   mergedFromId: string | null;
   isTemporary: boolean;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Sale {
-  id: string;
+export interface Sale extends BaseEntity {
   truckId: string;
   productId: string;
   customerId: string | null;
@@ -80,8 +70,6 @@ export interface Sale {
   autoInvoice: boolean;
   saleDate: string;
   notes: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface SaleWithDetails extends Sale {
@@ -92,8 +80,7 @@ export interface SaleWithDetails extends Sale {
   remainingInventory: number;
 }
 
-export interface Invoice {
-  id: string;
+export interface Invoice extends BaseEntity {
   invoiceNumber: string;
   customerId: string;
   totalAmount: number;
@@ -112,8 +99,7 @@ export interface Invoice {
   cancelledByUserId: string | null;
   cancellationReason: string | null;
   notes: string | null;
-  createdAt: string;
-  updatedAt: string;
+  isLocked: boolean;
 }
 
 export interface InvoiceWithDetails extends Invoice {
@@ -176,11 +162,17 @@ export interface AuditLog {
   id: string;
   entityType: string;
   entityId: string;
-  action: AuditAction;
-  oldValues: string | null;
-  newValues: string | null;
+  action: string;
   userId: string | null;
-  timestamp: string;
+  details: string | null;
+  createdAt: string;
+}
+
+export interface BaseEntity {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export interface InvoiceNumberSequence {
@@ -500,15 +492,12 @@ export interface DebtAgingReport {
   customers: CustomerDebtSummary[];
 }
 
-export interface User {
-  id: string;
+export interface User extends BaseEntity {
   username: string;
   role: UserRole;
   firstName: string | null;
   lastName: string | null;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
   lastLoginAt: string | null;
 }
 
