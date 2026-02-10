@@ -103,4 +103,21 @@ export class PaymentRepository {
     db.run(`DELETE FROM payments WHERE id = ?`, [id]);
     return true;
   }
+
+  getTotalPaid(invoiceId: string): number {
+    const db = getDatabase();
+    const stmt = db.prepare(
+      `SELECT COALESCE(SUM(amount), 0) as totalPaid FROM payments WHERE invoice_id = ?`
+    );
+    stmt.bind([invoiceId]);
+
+    let totalPaid = 0;
+    if (stmt.step()) {
+      const row = stmt.getAsObject() as any;
+      totalPaid = row.totalPaid || 0;
+    }
+    stmt.free();
+
+    return totalPaid;
+  }
 }

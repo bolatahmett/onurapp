@@ -28,6 +28,18 @@ export class AuditLogRepository {
     return this.getById(id)!;
   }
 
+  log(
+    entityType: string,
+    entityId: string,
+    action: AuditAction,
+    oldValues: any | null = null,
+    newValues: any | null = null,
+    userId: string | null = null
+  ): AuditLog {
+    // Alias for create() to match service calling convention
+    return this.create(entityType, entityId, action, oldValues, newValues, userId);
+  }
+
   getById(id: string): AuditLog | null {
     const db = getDatabase();
     const stmt = db.prepare(

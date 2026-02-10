@@ -1,26 +1,64 @@
 import { ipcMain } from 'electron';
 import { IpcChannels } from '../../shared/types/ipc';
-import { InvoiceStatus } from '../../shared/types/enums';
-import { InvoiceService } from '../services/invoice.service';
-import { PaymentService } from '../services/payment.service';
-import { CreateInvoiceDto, UpdateInvoiceDto, MarkInvoicePaidDto } from '../../shared/types/entities';
+import { InvoiceService } from '../domain/services/invoice.service';
+import { PaymentService } from '../domain/services/payment.service';
+import { CreateInvoiceDto, UpdateInvoiceDto } from '../../shared/types/entities';
+import { PaymentMethod } from '../../shared/types/enums';
 import { saveDatabase } from '../database/connection';
+import {
+  InvoiceRepository,
+  SaleRepository,
+  InvoiceNumberSequenceRepository,
+  InvoiceLineItemRepository,
+  AuditLogRepository,
+  PaymentRepository,
+  CustomerRepository,
+  ProductRepository,
+  TruckRepository,
+} from '../repositories';
 
 export function registerInvoiceIpc(): void {
-  const invoiceService = new InvoiceService();
-  const paymentService = new PaymentService();
+  // Initialize repositories
+  const invoiceRepo = new InvoiceRepository();
+  const saleRepo = new SaleRepository();
+  const sequenceRepo = new InvoiceNumberSequenceRepository();
+  const lineItemRepo = new InvoiceLineItemRepository();
+  const auditRepo = new AuditLogRepository();
+  const paymentRepo = new PaymentRepository();
+  const customerRepo = new CustomerRepository();
+  const productRepo = new ProductRepository();
+  const truckRepo = new TruckRepository();
 
-  ipcMain.handle(IpcChannels.INVOICE_GET_ALL, () => invoiceService.getAll());
+  // Initialize domain services with repositories
+  const invoiceService = new InvoiceService(
+    invoiceRepo,
+    saleRepo,
+    sequenceRepo,
+    lineItemRepo,
+    auditRepo,
+    paymentRepo,
+    customerRepo,
+    productRepo,
+    truckRepo
+  );
+
+  const paymentService = new PaymentService(
+    paymentRepo,
+    invoiceRepo,
+    auditRepo
+  );
+
+  ipcMain.handle(IpcChannels.INVOICE_GET_ALL, () => invoiceRepo.getAll());
   
-  ipcMain.handle(IpcChannels.INVOICE_GET_BY_ID, (_, id: string) => invoiceService.getById(id));
+  ipcMain.handle(IpcChannels.INVOICE_GET_BY_ID, (_, id: string) => invoiceService.getInvoiceWithDetails(id));
   
   ipcMain.handle(IpcChannels.INVOICE_GET_BY_CUSTOMER, (_, customerId: string) => 
-    invoiceService.getByCustomerId(customerId)
+    invoiceService.getInvoicesByCustomer(customerId)
   );
 
   ipcMain.handle(IpcChannels.INVOICE_CREATE, (_, customerId: string, saleIds: string[], dto: CreateInvoiceDto) => {
     try {
-      const invoice = invoiceService.create(customerId, saleIds, dto);
+      const invoice = invoiceService.createInvoiceFromSales(customerId, saleIds, dto);
       saveDatabase();
       return { success: true, data: invoice };
     } catch (error: any) {
@@ -30,7 +68,7 @@ export function registerInvoiceIpc(): void {
 
   ipcMain.handle(IpcChannels.INVOICE_UPDATE, (_, id: string, dto: UpdateInvoiceDto) => {
     try {
-      const invoice = invoiceService.update(id, dto);
+      const invoice = invoiceService.updateInvoice(id, dto);
       saveDatabase();
       return { success: true, data: invoice };
     } catch (error: any) {
@@ -40,7 +78,7 @@ export function registerInvoiceIpc(): void {
 
   ipcMain.handle(IpcChannels.INVOICE_ISSUE, (_, id: string) => {
     try {
-      const invoice = invoiceService.update(id, { status: InvoiceStatus.ISSUED });
+      const invoice = invoiceService.issueInvoice(id);
       saveDatabase();
       return { success: true, data: invoice };
     } catch (error: any) {
@@ -48,9 +86,9 @@ export function registerInvoiceIpc(): void {
     }
   });
 
-  ipcMain.handle(IpcChannels.INVOICE_MARK_PAID, (_, id: string, dto: MarkInvoicePaidDto) => {
+  ipcMain.handle(IpcChannels.INVOICE_MARK_PAID, (_, invoiceId: string, amount: number, method: string) => {
     try {
-      const invoice = invoiceService.markAsPaid(id, dto);
+      const invoice = invoiceService.markAsPaidIfFullyReconciled(invoiceId);
       saveDatabase();
       return { success: true, data: invoice };
     } catch (error: any) {
@@ -60,17 +98,19 @@ export function registerInvoiceIpc(): void {
 
   ipcMain.handle(IpcChannels.INVOICE_DELETE, (_, id: string) => {
     try {
-      const success = invoiceService.delete(id);
+      invoiceService.cancelInvoice(id);
       saveDatabase();
-      return { success, message: success ? 'Invoice deleted' : 'Failed to delete invoice' };
+      return { success: true, message: 'Invoice cancelled' };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
   });
 
-  ipcMain.handle(IpcChannels.PAYMENT_CREATE, (_, paymentDto: any) => {
+  ipcMain.handle(IpcChannels.PAYMENT_CREATE, (_, invoiceId: string, amount: number, paidDate: string, method: string, notes?: string) => {
     try {
-      const payment = paymentService.create(paymentDto);
+      // Cast method string to PaymentMethod enum
+      const paymentMethod = method as PaymentMethod;
+      const payment = paymentService.recordPayment(invoiceId, amount, paymentMethod, paidDate, notes);
       saveDatabase();
       return { success: true, data: payment };
     } catch (error: any) {
@@ -79,6 +119,16 @@ export function registerInvoiceIpc(): void {
   });
 
   ipcMain.handle(IpcChannels.PAYMENT_GET_BY_INVOICE, (_, invoiceId: string) => 
-    paymentService.getByInvoiceId(invoiceId)
+    paymentService.getPaymentsByInvoice(invoiceId)
   );
+
+  ipcMain.handle(IpcChannels.PAYMENT_DELETE, (_, paymentId: string) => {
+    try {
+      paymentService.reversePayment(paymentId);
+      saveDatabase();
+      return { success: true, message: 'Payment reversed' };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
 }

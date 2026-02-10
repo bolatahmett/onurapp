@@ -267,6 +267,7 @@ export interface CreateSaleDto {
 
 export interface UpdateSaleDto {
   customerId?: string | null;
+  invoiceId?: string | null;
   unitType?: UnitType;
   quantity?: number;
   unitPrice?: number;
@@ -285,10 +286,15 @@ export interface CreateInvoiceDto {
 }
 
 export interface UpdateInvoiceDto {
+  customerId?: string;
   status?: InvoiceStatus;
   notes?: string;
   dueDate?: string;
   taxRate?: number;
+  issueDate?: string;
+  paymentReceivedDate?: string | null;
+  paymentMethod?: string;
+  paymentNotes?: string;
 }
 
 export interface MarkInvoicePaidDto {
