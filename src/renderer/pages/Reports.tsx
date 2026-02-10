@@ -7,7 +7,7 @@ import { DataTable } from '../components/common/DataTable';
 import { formatCurrency, formatDate, todayISO, daysAgoISO } from '../utils/formatters';
 import type { DailySummary, ProductSummary, CustomerSummary, TruckSummary } from '@shared/types/entities';
 
-type ReportTab = 'daily' | 'product' | 'customer' | 'truck';
+type ReportTab = 'daily' | 'product' | 'customer' | 'truck' | 'debtAging';
 
 export function Reports() {
   const { t } = useTranslation();
@@ -34,12 +34,16 @@ export function Reports() {
     () => window.api.report.truckSummary(startDate, endDate),
     [startDate, endDate]
   );
+  const { data: debtAgingResult, loading: debtAgingLoading } = useIpc<any>(
+    () => window.api.report.getDebtAging()
+  );
 
   const tabs: { key: ReportTab; label: string }[] = [
     { key: 'daily', label: t('reports.dailySummary') },
     { key: 'product', label: t('reports.productReport') },
     { key: 'customer', label: t('reports.customerReport') },
     { key: 'truck', label: t('reports.truckReport') },
+    { key: 'debtAging', label: t('reports.debtAging') },
   ];
 
   const dailyColumns = [
@@ -95,8 +99,11 @@ export function Reports() {
       case 'product': return (productData ?? []).reduce((s, d) => s + d.totalRevenue, 0);
       case 'customer': return (customerData ?? []).reduce((s, d) => s + d.totalAmount, 0);
       case 'truck': return (truckData ?? []).reduce((s, d) => s + d.totalRevenue, 0);
+      case 'debtAging': return debtAgingResult?.success ? debtAgingResult.data.totalOutstanding : 0;
     }
   };
+
+  const debtAgingData = debtAgingResult?.success ? debtAgingResult.data : null;
 
   return (
     <div className="space-y-6">
@@ -207,6 +214,70 @@ export function Reports() {
             />
             <TruckDrilldown open={drillOpen} truckId={drillTruckId} onClose={() => setDrillOpen(false)} />
           </>
+        )}
+        {activeTab === 'debtAging' && (
+          debtAgingLoading ? (
+            <p className="text-gray-500">{t('common.loading')}</p>
+          ) : debtAgingData ? (
+            <div className="space-y-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-red-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500">{t('reports.totalOutstanding')}</p>
+                  <p className="text-xl font-bold text-red-600">{formatCurrency(debtAgingData.totalOutstanding)}</p>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500">{t('reports.totalOverdue')}</p>
+                  <p className="text-xl font-bold text-orange-600">{formatCurrency(debtAgingData.totalOverdue)}</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500">{t('reports.customersWithDebt')}</p>
+                  <p className="text-xl font-bold text-blue-600">{debtAgingData.customerCount}</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-500">{t('reports.current')}</p>
+                  <p className="text-xl font-bold text-green-600">{formatCurrency(debtAgingData.currentDue)}</p>
+                </div>
+              </div>
+
+              {/* Aging Breakdown */}
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-yellow-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500">{t('reports.overdue1to30')}</p>
+                  <p className="text-lg font-semibold text-yellow-700">{formatCurrency(debtAgingData.overdue1to30)}</p>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500">{t('reports.overdue31to60')}</p>
+                  <p className="text-lg font-semibold text-orange-700">{formatCurrency(debtAgingData.overdue31to60)}</p>
+                </div>
+                <div className="bg-red-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500">{t('reports.overdue61to90')}</p>
+                  <p className="text-lg font-semibold text-red-700">{formatCurrency(debtAgingData.overdue61to90)}</p>
+                </div>
+                <div className="bg-red-100 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500">{t('reports.overdue90Plus')}</p>
+                  <p className="text-lg font-semibold text-red-800">{formatCurrency(debtAgingData.overdue90Plus)}</p>
+                </div>
+              </div>
+
+              {/* Customer Debt Table */}
+              {debtAgingData.customers && debtAgingData.customers.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">{t('reports.customersWithDebt')}</h4>
+                  <div className="border rounded-lg divide-y max-h-96 overflow-auto">
+                    {debtAgingData.customers.map((cust: any) => (
+                      <div key={cust.customerId} className="flex items-center justify-between px-4 py-3 text-sm">
+                        <span className="font-medium">{cust.customerName}</span>
+                        <span className="font-semibold text-red-600">{formatCurrency(cust.totalOutstanding)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-gray-500">{t('common.noData')}</p>
+          )
         )}
       </div>
     </div>

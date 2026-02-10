@@ -50,7 +50,9 @@
     "activeTrucks": "Aktif TIR'lar",
     "totalCustomers": "Toplam Müşteri",
     "recentSales": "Son Satışlar",
-    "quickActions": "Hızlı İşlemler"
+    "quickActions": "Hızlı İşlemler",
+    "outstandingReceivables": "Toplam Alacak",
+    "overdueInvoices": "Vadesi Geçen"
   },
   "trucks": {
     "title": "TIR Yönetimi",
@@ -110,7 +112,9 @@
     "salesHistory": "Satış Geçmişi",
     "merge": "Birleştir",
     "selectTarget": "Hedef müşteriyi seçin",
-    "totalPurchases": "Toplam Alım"
+    "totalPurchases": "Toplam Alım",
+    "totalOutstanding": "Toplam Borç",
+    "noDebt": "Borç Yok"
   },
   "invoices": {
     "title": "Fatura Yönetimi",
@@ -119,13 +123,25 @@
     "issueDate": "Düzenleme Tarihi",
     "dueDate": "Vade Tarihi",
     "totalAmount": "Toplam Tutar",
+    "paidAmount": "Ödenen",
+    "remainingBalance": "Kalan Borç",
     "selectSales": "Satışları Seçin",
     "exportPdf": "PDF İndir",
+    "markPaid": "Ödendi Olarak İşaretle",
+    "makePayment": "Ödeme Yap",
+    "partialPayment": "Kısmi Ödeme",
+    "paymentAmount": "Ödeme Tutarı",
     "status": {
       "DRAFT": "Taslak",
       "ISSUED": "Düzenlendi",
       "PAID": "Ödendi",
       "CANCELLED": "İptal"
+    },
+    "paymentStatus": {
+      "UNPAID": "Ödenmedi",
+      "PARTIAL": "Kısmi Ödendi",
+      "PAID": "Ödendi",
+      "OVERDUE": "Vadesi Geçti"
     }
   },
   "reports": {
@@ -146,7 +162,16 @@
     "exportPdf": "PDF Dışa Aktar",
     "exporting": "Dışa aktarılıyor...",
     "exportSuccess": "Rapor çıktı dosyası oluşturuldu",
-    "exportError": "Dışa aktarma başarısız"
+    "exportError": "Dışa aktarma başarısız",
+    "debtAging": "Borç Yaşlandırma",
+    "totalOutstanding": "Toplam Alacak",
+    "totalOverdue": "Vadesi Geçen",
+    "current": "Güncel",
+    "overdue1to30": "1-30 Gün",
+    "overdue31to60": "31-60 Gün",
+    "overdue61to90": "61-90 Gün",
+    "overdue90Plus": "90+ Gün",
+    "customersWithDebt": "Borçlu Müşteriler"
   },
   "settings": {
     "title": "Ayarlar",
@@ -164,5 +189,12 @@
       "tr": "Türkçe",
       "en": "English"
     }
+  },
+  "payments": {
+    "method": "Ödeme Yöntemi",
+    "CASH": "Nakit",
+    "TRANSFER": "Havale",
+    "CHECK": "Çek",
+    "CREDIT_CARD": "Kredi Kartı"
   }
 }

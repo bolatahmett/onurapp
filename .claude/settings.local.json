@@ -10,7 +10,8 @@
       "Bash(npx vite build:*)",
       "Bash(dir:*)",
       "Bash(npx electron .)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

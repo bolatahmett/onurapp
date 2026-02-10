@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { useIpc } from '../hooks/useIpc';
@@ -28,6 +28,25 @@ export function Invoices() {
   const [uninvoicedSales, setUninvoicedSales] = useState<SaleWithDetails[]>([]);
   const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
   const [createForm, setCreateForm] = useState({ customerId: '', notes: '', dueDate: '' });
+  const [paymentSummaries, setPaymentSummaries] = useState<Record<string, { totalPaid: number; remainingBalance: number; paymentStatus: string }>>({});
+
+  useEffect(() => {
+    if (!invoices) return;
+    const loadSummaries = async () => {
+      const map: Record<string, any> = {};
+      for (const inv of invoices) {
+        if (inv.status === 'DRAFT' || inv.status === 'CANCELLED') continue;
+        try {
+          const res = await window.api.invoice.getPaymentSummary(inv.id);
+          if (res?.success) {
+            map[inv.id] = res.data;
+          }
+        } catch { /* ignore */ }
+      }
+      setPaymentSummaries(map);
+    };
+    loadSummaries();
+  }, [invoices]);
 
   const handleCustomerSelect = async (customerId: string) => {
     setCreateForm({ ...createForm, customerId });
@@ -101,11 +120,34 @@ export function Invoices() {
       render: (item: Invoice) => <span className="font-semibold">{formatCurrency(item.totalAmount)}</span>,
     },
     {
-      key: 'status',
+      key: 'paidAmount',
+      header: t('invoices.paidAmount'),
+      render: (item: Invoice) => {
+        const summary = paymentSummaries[item.id];
+        if (!summary) return <span className="text-gray-400">-</span>;
+        return <span className="text-green-600">{formatCurrency(summary.totalPaid)}</span>;
+      },
+    },
+    {
+      key: 'remaining',
+      header: t('invoices.remainingBalance'),
+      render: (item: Invoice) => {
+        const summary = paymentSummaries[item.id];
+        if (!summary) return <span className="text-gray-400">-</span>;
+        if (summary.remainingBalance <= 0) return <span className="text-green-600">0</span>;
+        return <span className="font-semibold text-red-600">{formatCurrency(summary.remainingBalance)}</span>;
+      },
+    },
+    {
+      key: 'paymentStatus',
       header: t('common.status'),
-      render: (item: Invoice) => (
-        <StatusBadge status={item.status} label={t(`invoices.status.${item.status}`)} />
-      ),
+      render: (item: Invoice) => {
+        const summary = paymentSummaries[item.id];
+        if (summary?.paymentStatus) {
+          return <StatusBadge status={summary.paymentStatus} label={t(`invoices.paymentStatus.${summary.paymentStatus}`)} />;
+        }
+        return <StatusBadge status={item.status} label={t(`invoices.status.${item.status}`)} />;
+      },
     },
     {
       key: 'issueDate',
@@ -249,6 +291,20 @@ export function Invoices() {
                 <span className="text-gray-500">{t('invoices.issueDate')}: </span>
                 <span>{selectedInvoice.issueDate ? formatDate(selectedInvoice.issueDate) : '-'}</span>
               </div>
+              {paymentSummaries[selectedInvoice.id] && (
+                <>
+                  <div>
+                    <span className="text-gray-500">{t('invoices.paidAmount')}: </span>
+                    <span className="font-semibold text-green-600">{formatCurrency(paymentSummaries[selectedInvoice.id].totalPaid)}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">{t('invoices.remainingBalance')}: </span>
+                    <span className={`font-semibold ${paymentSummaries[selectedInvoice.id].remainingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {formatCurrency(paymentSummaries[selectedInvoice.id].remainingBalance)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="border rounded-lg divide-y">
@@ -271,12 +327,12 @@ export function Invoices() {
                     {t('invoices.status.ISSUED')}
                   </button>
                 )}
-                {selectedInvoice.status === InvoiceStatus.ISSUED && (
+                {selectedInvoice.status === InvoiceStatus.ISSUED && selectedInvoice.status !== InvoiceStatus.PAID && (
                   <button
                     onClick={() => setShowPayment(true)}
                     className="btn-primary btn-sm"
                   >
-                    {t('invoices.status.PAID')}
+                    {t('invoices.makePayment')}
                   </button>
                 )}
                 {selectedInvoice.status !== InvoiceStatus.CANCELLED &&
@@ -300,6 +356,8 @@ export function Invoices() {
       <PaymentModal
         open={showPayment}
         invoiceId={selectedInvoice?.id ?? null}
+        invoiceTotal={selectedInvoice?.totalAmount}
+        remainingBalance={selectedInvoice ? paymentSummaries[selectedInvoice.id]?.remainingBalance : undefined}
         onClose={() => setShowPayment(false)}
         onPaid={async () => {
           setShowPayment(false);

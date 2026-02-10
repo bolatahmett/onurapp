@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Truck, Users, TrendingUp, Plus } from 'lucide-react';
+import { ShoppingCart, Truck, Users, TrendingUp, Plus, AlertCircle } from 'lucide-react';
 import { useIpc } from '../hooks/useIpc';
 import { formatCurrency, formatDateTime, todayISO } from '../utils/formatters';
 import type { SaleWithDetails } from '@shared/types/entities';
@@ -13,11 +13,14 @@ export function Dashboard() {
   const { data: sales } = useIpc<SaleWithDetails[]>(() => window.api.sale.getAll());
   const { data: activeTrucks } = useIpc<TruckType[]>(() => window.api.truck.getActive());
   const { data: customers } = useIpc(() => window.api.customer.getActive());
+  const { data: overdueResult } = useIpc<any>(() => window.api.invoice.getOverdue());
 
   const today = todayISO();
   const todaySales = sales?.filter((s) => s.saleDate.startsWith(today)) ?? [];
   const todayRevenue = todaySales.reduce((sum, s) => sum + s.totalPrice, 0);
   const recentSales = (sales ?? []).slice(0, 8);
+  const overdueInvoices = overdueResult?.success ? overdueResult.data : [];
+  const overdueTotal = overdueInvoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
 
   const stats = [
     {
@@ -44,6 +47,12 @@ export function Dashboard() {
       icon: Users,
       color: 'text-purple-600 bg-purple-100',
     },
+    {
+      label: t('dashboard.overdueInvoices'),
+      value: overdueInvoices.length > 0 ? `${overdueInvoices.length} (${formatCurrency(overdueTotal)})` : '0',
+      icon: AlertCircle,
+      color: overdueInvoices.length > 0 ? 'text-red-600 bg-red-100' : 'text-gray-600 bg-gray-100',
+    },
   ];
 
   return (
@@ -51,7 +60,7 @@ export function Dashboard() {
       <h2 className="page-title">{t('dashboard.title')}</h2>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {stats.map((stat, i) => (
           <div key={i} className="card flex items-center gap-4">
             <div className={`p-3 rounded-lg ${stat.color}`}>

@@ -50,7 +50,9 @@
     "activeTrucks": "Active Trucks",
     "totalCustomers": "Total Customers",
     "recentSales": "Recent Sales",
-    "quickActions": "Quick Actions"
+    "quickActions": "Quick Actions",
+    "outstandingReceivables": "Outstanding Receivables",
+    "overdueInvoices": "Overdue Invoices"
   },
   "trucks": {
     "title": "Truck Management",
@@ -110,7 +112,9 @@
     "salesHistory": "Sales History",
     "merge": "Merge",
     "selectTarget": "Select target customer",
-    "totalPurchases": "Total Purchases"
+    "totalPurchases": "Total Purchases",
+    "totalOutstanding": "Total Outstanding",
+    "noDebt": "No Debt"
   },
   "invoices": {
     "title": "Invoice Management",
@@ -119,13 +123,25 @@
     "issueDate": "Issue Date",
     "dueDate": "Due Date",
     "totalAmount": "Total Amount",
+    "paidAmount": "Paid",
+    "remainingBalance": "Remaining",
     "selectSales": "Select Sales",
     "exportPdf": "Export PDF",
+    "markPaid": "Mark as Paid",
+    "makePayment": "Make Payment",
+    "partialPayment": "Partial Payment",
+    "paymentAmount": "Payment Amount",
     "status": {
       "DRAFT": "Draft",
       "ISSUED": "Issued",
       "PAID": "Paid",
       "CANCELLED": "Cancelled"
+    },
+    "paymentStatus": {
+      "UNPAID": "Unpaid",
+      "PARTIAL": "Partially Paid",
+      "PAID": "Paid",
+      "OVERDUE": "Overdue"
     }
   },
   "reports": {
@@ -146,7 +162,16 @@
     "exportPdf": "Export PDF",
     "exporting": "Exporting...",
     "exportSuccess": "Report exported",
-    "exportError": "Failed to export"
+    "exportError": "Failed to export",
+    "debtAging": "Debt Aging",
+    "totalOutstanding": "Total Outstanding",
+    "totalOverdue": "Total Overdue",
+    "current": "Current",
+    "overdue1to30": "1-30 Days",
+    "overdue31to60": "31-60 Days",
+    "overdue61to90": "61-90 Days",
+    "overdue90Plus": "90+ Days",
+    "customersWithDebt": "Customers with Debt"
   },
   "settings": {
     "title": "Settings",
@@ -164,5 +189,12 @@
       "tr": "Türkçe",
       "en": "English"
     }
+  },
+  "payments": {
+    "method": "Payment Method",
+    "CASH": "Cash",
+    "TRANSFER": "Transfer",
+    "CHECK": "Check",
+    "CREDIT_CARD": "Credit Card"
   }
 }

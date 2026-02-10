@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { useIpc } from '../hooks/useIpc';
@@ -9,6 +9,12 @@ import MergeModal from '../components/customers/MergeModal';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import type { Customer, CreateCustomerDto, SaleWithDetails } from '@shared/types/entities';
 
+interface CustomerBalance {
+  totalInvoiced: number;
+  totalPaid: number;
+  totalOutstanding: number;
+}
+
 export function Customers() {
   const { t } = useTranslation();
   const { data: customers, loading, refresh } = useIpc<Customer[]>(() => window.api.customer.getAll());
@@ -18,6 +24,24 @@ export function Customers() {
   const [customerSales, setCustomerSales] = useState<SaleWithDetails[]>([]);
   const [showMerge, setShowMerge] = useState(false);
   const [mergeSource, setMergeSource] = useState<Customer | null>(null);
+  const [balances, setBalances] = useState<Record<string, CustomerBalance>>({});
+
+  useEffect(() => {
+    if (!customers) return;
+    const loadBalances = async () => {
+      const map: Record<string, CustomerBalance> = {};
+      for (const c of customers) {
+        try {
+          const res = await window.api.customer.getBalance(c.id);
+          if (res?.success) {
+            map[c.id] = res.data;
+          }
+        } catch { /* ignore */ }
+      }
+      setBalances(map);
+    };
+    loadBalances();
+  }, [customers]);
 
   const [form, setForm] = useState({
     name: '',
@@ -77,6 +101,17 @@ export function Customers() {
         item.isTemporary ? (
           <StatusBadge status="DRAFT" label={t('common.yes')} />
         ) : null,
+    },
+    {
+      key: 'outstanding',
+      header: t('customers.totalOutstanding'),
+      render: (item: Customer) => {
+        const bal = balances[item.id];
+        if (!bal || bal.totalOutstanding === 0) {
+          return <span className="text-gray-400 text-sm">{t('customers.noDebt')}</span>;
+        }
+        return <span className="font-semibold text-red-600">{formatCurrency(bal.totalOutstanding)}</span>;
+      },
     },
     {
       key: 'isActive',
