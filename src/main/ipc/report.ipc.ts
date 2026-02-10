@@ -77,4 +77,35 @@ export function registerReportIpc(): void {
       return { success: false, error: error.message };
     }
   });
+
+  // =========================================================================
+  // Debt & Aging Reports
+  // =========================================================================
+
+  ipcMain.handle(IpcChannels.REPORT_GET_DEBT_AGING, () => {
+    try {
+      const report = service.getDebtAgingReport();
+      return { success: true, data: report };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.REPORT_GET_PAYMENT_PERFORMANCE, () => {
+    try {
+      const report = service.getCustomerPaymentPerformance();
+      return { success: true, data: report };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.REPORT_GET_COLLECTION_SUMMARY, (_, startDate: string, endDate: string) => {
+    try {
+      const summary = service.getCollectionSummary(startDate, endDate);
+      return { success: true, data: summary };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
 }

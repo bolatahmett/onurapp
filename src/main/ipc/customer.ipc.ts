@@ -9,6 +9,7 @@ import {
   SaleRepository,
   InvoiceRepository,
   AuditLogRepository,
+  PaymentRepository,
 } from '../repositories';
 
 export function registerCustomerIpc(): void {
@@ -18,27 +19,29 @@ export function registerCustomerIpc(): void {
   const saleRepo = new SaleRepository();
   const invoiceRepo = new InvoiceRepository();
   const auditRepo = new AuditLogRepository();
+  const paymentRepo = new PaymentRepository();
 
-  // Initialize domain service with repositories
+  // Initialize domain service with repositories (now includes paymentRepo)
   const service = new CustomerService(
     customerRepo,
     customerMergeRepo,
     saleRepo,
     invoiceRepo,
-    auditRepo
+    auditRepo,
+    paymentRepo
   );
 
   ipcMain.handle(IpcChannels.CUSTOMER_GET_ALL, () => service.getAllCustomers());
-  
+
   ipcMain.handle(IpcChannels.CUSTOMER_GET_ACTIVE, () => service.getActiveCustomers());
-  
+
   ipcMain.handle(IpcChannels.CUSTOMER_GET_TEMPORARY, () => {
     // Get customers where isTemporary = true and isActive = true
     return service.getAllCustomers().filter(c => c.isTemporary && c.isActive);
   });
-  
+
   ipcMain.handle(IpcChannels.CUSTOMER_GET_BY_ID, (_, id: string) => service.getCustomer(id));
-  
+
   ipcMain.handle(IpcChannels.CUSTOMER_CREATE, (_, dto: CreateCustomerDto) => {
     try {
       const customer = service.createCustomer(dto);
@@ -48,7 +51,7 @@ export function registerCustomerIpc(): void {
       return { success: false, error: error.message };
     }
   });
-  
+
   ipcMain.handle(IpcChannels.CUSTOMER_UPDATE, (_, id: string, dto: UpdateCustomerDto) => {
     try {
       const customer = service.updateCustomer(id, dto);
@@ -58,7 +61,7 @@ export function registerCustomerIpc(): void {
       return { success: false, error: error.message };
     }
   });
-  
+
   ipcMain.handle(IpcChannels.CUSTOMER_DELETE, (_, id: string) => {
     try {
       // In the new service, we deactivate rather than delete
@@ -84,6 +87,55 @@ export function registerCustomerIpc(): void {
     try {
       const history = service.getCustomerHistory(customerId);
       return { success: true, data: history };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // =========================================================================
+  // Customer Debt & Balance Endpoints
+  // =========================================================================
+
+  ipcMain.handle(IpcChannels.CUSTOMER_GET_SUMMARY, (_, customerId: string) => {
+    try {
+      const summary = service.getCustomerSummary(customerId);
+      return { success: true, data: summary };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.CUSTOMER_GET_BALANCE, (_, customerId: string) => {
+    try {
+      const balance = service.getCustomerBalance(customerId);
+      return { success: true, data: balance };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.CUSTOMER_GET_INVOICE_STATUSES, (_, customerId: string) => {
+    try {
+      const statuses = service.getCustomerInvoiceStatuses(customerId);
+      return { success: true, data: statuses };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.CUSTOMER_GET_WITH_DEBT, () => {
+    try {
+      const customers = service.getCustomersWithDebt();
+      return { success: true, data: customers };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle(IpcChannels.CUSTOMER_GET_OVER_CREDIT, () => {
+    try {
+      const customers = service.getCustomersOverCreditLimit();
+      return { success: true, data: customers };
     } catch (error: any) {
       return { success: false, error: error.message };
     }

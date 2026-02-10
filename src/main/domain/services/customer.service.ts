@@ -18,22 +18,30 @@ import {
   Invoice,
   CustomerHistoryEntry,
   CustomerMerge,
+  CustomerDebtSummary,
+  InvoicePaymentSummary,
 } from '../../../shared/types/entities';
-import { AuditAction } from '../../../shared/types/enums';
+import { AuditAction, InvoiceStatus, PaymentStatus } from '../../../shared/types/enums';
 import { CustomerRepository } from '../../repositories/customer.repository';
 import { CustomerMergeRepository } from '../../repositories/customer-merge.repository';
 import { SaleRepository } from '../../repositories/sale.repository';
 import { InvoiceRepository } from '../../repositories/invoice.repository';
 import { AuditLogRepository } from '../../repositories/audit-log.repository';
+import { PaymentRepository } from '../../repositories/payment.repository';
 
 export class CustomerService {
+  private paymentRepo: PaymentRepository;
+
   constructor(
     private customerRepo: CustomerRepository,
     private customerMergeRepo: CustomerMergeRepository,
     private saleRepo: SaleRepository,
     private invoiceRepo: InvoiceRepository,
-    private auditRepo: AuditLogRepository
-  ) {}
+    private auditRepo: AuditLogRepository,
+    paymentRepo?: PaymentRepository
+  ) {
+    this.paymentRepo = paymentRepo || new PaymentRepository();
+  }
 
   /**
    * Create a new customer
@@ -232,7 +240,7 @@ export class CustomerService {
   }
 
   /**
-   * Get customer purchase summary
+   * Get customer purchase summary with debt information
    */
   getCustomerSummary(customerId: string): {
     customer: Customer;
@@ -240,6 +248,13 @@ export class CustomerService {
     totalAmount: number;
     lastPurchaseDate: string | null;
     outstandingInvoices: number;
+    // Debt tracking
+    totalInvoiced: number;
+    totalPaid: number;
+    totalOutstanding: number;
+    overdueAmount: number;
+    availableCredit: number | null;
+    isOverCreditLimit: boolean;
   } {
     const customer = this.customerRepo.getById(customerId);
     if (!customer) {
@@ -258,7 +273,36 @@ export class CustomerService {
           ).saleDate
         : null;
 
-    const outstandingInvoices = invoices.filter(inv => inv.status !== 'PAID').length;
+    const outstandingInvoices = invoices.filter(
+      inv => inv.status !== InvoiceStatus.PAID && inv.status !== InvoiceStatus.CANCELLED
+    ).length;
+
+    // Calculate debt info
+    let totalInvoiced = 0;
+    let totalPaid = 0;
+    let overdueAmount = 0;
+    const now = new Date();
+
+    for (const invoice of invoices) {
+      if (invoice.status === InvoiceStatus.CANCELLED) continue;
+
+      totalInvoiced += invoice.netTotal;
+      const invoicePaid = this.paymentRepo.getTotalPaid(invoice.id);
+      totalPaid += invoicePaid;
+
+      const remaining = Math.max(0, invoice.netTotal - invoicePaid);
+      if (invoice.dueDate && new Date(invoice.dueDate) < now && remaining > 0.01) {
+        overdueAmount += remaining;
+      }
+    }
+
+    const totalOutstanding = Math.max(0, totalInvoiced - totalPaid);
+    const availableCredit = customer.creditLimit !== null
+      ? Math.max(0, customer.creditLimit - totalOutstanding)
+      : null;
+    const isOverCreditLimit = customer.creditLimit !== null
+      ? totalOutstanding > customer.creditLimit
+      : false;
 
     return {
       customer,
@@ -266,6 +310,12 @@ export class CustomerService {
       totalAmount,
       lastPurchaseDate,
       outstandingInvoices,
+      totalInvoiced,
+      totalPaid,
+      totalOutstanding,
+      overdueAmount,
+      availableCredit,
+      isOverCreditLimit,
     };
   }
 
@@ -311,6 +361,183 @@ export class CustomerService {
     )[0];
 
     return this.customerRepo.getById(mostRecent.targetCustomerId);
+  }
+
+  // =========================================================================
+  // Customer Debt & Balance Tracking
+  // =========================================================================
+
+  /**
+   * Get outstanding balance for a customer (quick calculation)
+   */
+  getCustomerBalance(customerId: string): {
+    totalInvoiced: number;
+    totalPaid: number;
+    totalOutstanding: number;
+    overdueAmount: number;
+  } {
+    const invoices = this.invoiceRepo.getByCustomerId(customerId);
+    const now = new Date();
+
+    let totalInvoiced = 0;
+    let totalPaid = 0;
+    let overdueAmount = 0;
+
+    for (const invoice of invoices) {
+      if (invoice.status === InvoiceStatus.CANCELLED) continue;
+
+      totalInvoiced += invoice.netTotal;
+      const invoicePaid = this.paymentRepo.getTotalPaid(invoice.id);
+      totalPaid += invoicePaid;
+
+      const remaining = Math.max(0, invoice.netTotal - invoicePaid);
+      if (invoice.dueDate && new Date(invoice.dueDate) < now && remaining > 0.01) {
+        overdueAmount += remaining;
+      }
+    }
+
+    return {
+      totalInvoiced,
+      totalPaid,
+      totalOutstanding: Math.max(0, totalInvoiced - totalPaid),
+      overdueAmount,
+    };
+  }
+
+  /**
+   * Get invoice payment statuses for a customer
+   * Shows each invoice with: ödendi / kısmi ödendi / ödenmedi / vadesi geçmiş
+   */
+  getCustomerInvoiceStatuses(customerId: string): InvoicePaymentSummary[] {
+    const invoices = this.invoiceRepo.getByCustomerId(customerId);
+    const now = new Date();
+
+    return invoices
+      .filter(inv => inv.status !== InvoiceStatus.CANCELLED)
+      .map(invoice => {
+        const totalPaid = this.paymentRepo.getTotalPaid(invoice.id);
+        const remainingBalance = Math.max(0, invoice.netTotal - totalPaid);
+
+        let paymentStatus: PaymentStatus;
+        let isOverdue = false;
+
+        if (invoice.status === InvoiceStatus.PAID || remainingBalance <= 0.01) {
+          paymentStatus = PaymentStatus.PAID;
+        } else if (invoice.dueDate && new Date(invoice.dueDate) < now && remainingBalance > 0.01) {
+          paymentStatus = PaymentStatus.OVERDUE;
+          isOverdue = true;
+        } else if (totalPaid > 0) {
+          paymentStatus = PaymentStatus.PARTIAL;
+        } else {
+          paymentStatus = PaymentStatus.UNPAID;
+        }
+
+        return {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          netTotal: invoice.netTotal,
+          totalPaid,
+          remainingBalance,
+          paymentStatus,
+          isOverdue,
+        };
+      });
+  }
+
+  /**
+   * Get all customers with outstanding debt (borcu olan müşteriler)
+   */
+  getCustomersWithDebt(): Array<{
+    customer: Customer;
+    totalOutstanding: number;
+    overdueAmount: number;
+    invoiceCount: number;
+    overdueInvoiceCount: number;
+  }> {
+    const customers = this.customerRepo.getActive();
+    const now = new Date();
+    const result: Array<{
+      customer: Customer;
+      totalOutstanding: number;
+      overdueAmount: number;
+      invoiceCount: number;
+      overdueInvoiceCount: number;
+    }> = [];
+
+    for (const customer of customers) {
+      const invoices = this.invoiceRepo.getByCustomerId(customer.id);
+      let totalOutstanding = 0;
+      let overdueAmount = 0;
+      let invoiceCount = 0;
+      let overdueInvoiceCount = 0;
+
+      for (const invoice of invoices) {
+        if (invoice.status === InvoiceStatus.CANCELLED || invoice.status === InvoiceStatus.PAID) continue;
+
+        const paid = this.paymentRepo.getTotalPaid(invoice.id);
+        const remaining = Math.max(0, invoice.netTotal - paid);
+
+        if (remaining > 0.01) {
+          totalOutstanding += remaining;
+          invoiceCount++;
+
+          if (invoice.dueDate && new Date(invoice.dueDate) < now) {
+            overdueAmount += remaining;
+            overdueInvoiceCount++;
+          }
+        }
+      }
+
+      if (totalOutstanding > 0.01) {
+        result.push({
+          customer,
+          totalOutstanding,
+          overdueAmount,
+          invoiceCount,
+          overdueInvoiceCount,
+        });
+      }
+    }
+
+    // Sort by total outstanding descending
+    result.sort((a, b) => b.totalOutstanding - a.totalOutstanding);
+    return result;
+  }
+
+  /**
+   * Get customers who are over their credit limit
+   */
+  getCustomersOverCreditLimit(): Array<{
+    customer: Customer;
+    creditLimit: number;
+    totalOutstanding: number;
+    overLimitAmount: number;
+  }> {
+    const customers = this.customerRepo.getActive();
+    const result: Array<{
+      customer: Customer;
+      creditLimit: number;
+      totalOutstanding: number;
+      overLimitAmount: number;
+    }> = [];
+
+    for (const customer of customers) {
+      if (customer.creditLimit === null) continue;
+
+      const balance = this.getCustomerBalance(customer.id);
+
+      if (balance.totalOutstanding > customer.creditLimit) {
+        result.push({
+          customer,
+          creditLimit: customer.creditLimit,
+          totalOutstanding: balance.totalOutstanding,
+          overLimitAmount: balance.totalOutstanding - customer.creditLimit,
+        });
+      }
+    }
+
+    result.sort((a, b) => b.overLimitAmount - a.overLimitAmount);
+    return result;
   }
 }
 

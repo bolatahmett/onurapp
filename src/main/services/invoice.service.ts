@@ -1,10 +1,12 @@
-import { 
-  Invoice, 
-  CreateInvoiceDto, 
+import {
+  Invoice,
+  CreateInvoiceDto,
   UpdateInvoiceDto,
   MarkInvoicePaidDto,
+  InvoicePaymentSummary,
+  InvoiceWithDetails,
 } from '../../shared/types/entities';
-import { InvoiceStatus, AuditAction } from '../../shared/types/enums';
+import { InvoiceStatus, AuditAction, PaymentStatus } from '../../shared/types/enums';
 import { InvoiceRepository } from '../repositories/invoice.repository';
 import { InvoiceNumberSequenceRepository } from '../repositories/invoice-sequence.repository';
 import { InvoiceLineItemRepository } from '../repositories/invoice-line-item.repository';
@@ -226,5 +228,185 @@ export class InvoiceService {
    */
   getPayments(invoiceId: string) {
     return this.paymentRepo.getByInvoiceId(invoiceId);
+  }
+
+  // =========================================================================
+  // Payment Status & Balance Methods
+  // =========================================================================
+
+  /**
+   * Get payment summary for an invoice (paid/unpaid/partial/overdue + amounts)
+   */
+  getPaymentSummary(invoiceId: string): InvoicePaymentSummary | null {
+    const invoice = this.invoiceRepo.getById(invoiceId);
+    if (!invoice) return null;
+
+    const totalPaid = this.paymentRepo.getTotalPaid(invoiceId);
+    const remainingBalance = Math.max(0, invoice.netTotal - totalPaid);
+
+    let paymentStatus: PaymentStatus;
+    let isOverdue = false;
+
+    if (invoice.status === InvoiceStatus.PAID || remainingBalance <= 0.01) {
+      paymentStatus = PaymentStatus.PAID;
+    } else if (invoice.status === InvoiceStatus.CANCELLED) {
+      paymentStatus = PaymentStatus.UNPAID;
+    } else {
+      // Check overdue
+      if (invoice.dueDate && new Date(invoice.dueDate) < new Date() && remainingBalance > 0.01) {
+        paymentStatus = PaymentStatus.OVERDUE;
+        isOverdue = true;
+      } else if (totalPaid > 0) {
+        paymentStatus = PaymentStatus.PARTIAL;
+      } else {
+        paymentStatus = PaymentStatus.UNPAID;
+      }
+    }
+
+    return {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      netTotal: invoice.netTotal,
+      totalPaid,
+      remainingBalance,
+      paymentStatus,
+      isOverdue,
+    };
+  }
+
+  /**
+   * Get all invoices with payment info for a customer
+   */
+  getCustomerInvoicesWithPaymentInfo(customerId: string): Array<Invoice & {
+    totalPaid: number;
+    remainingBalance: number;
+    paymentStatus: PaymentStatus;
+    isOverdue: boolean;
+  }> {
+    const invoices = this.invoiceRepo.getByCustomerId(customerId);
+
+    return invoices.map(invoice => {
+      const totalPaid = this.paymentRepo.getTotalPaid(invoice.id);
+      const remainingBalance = Math.max(0, invoice.netTotal - totalPaid);
+
+      let paymentStatus: PaymentStatus;
+      let isOverdue = false;
+
+      if (invoice.status === InvoiceStatus.PAID || remainingBalance <= 0.01) {
+        paymentStatus = PaymentStatus.PAID;
+      } else if (invoice.status === InvoiceStatus.CANCELLED) {
+        paymentStatus = PaymentStatus.UNPAID;
+      } else {
+        if (invoice.dueDate && new Date(invoice.dueDate) < new Date() && remainingBalance > 0.01) {
+          paymentStatus = PaymentStatus.OVERDUE;
+          isOverdue = true;
+        } else if (totalPaid > 0) {
+          paymentStatus = PaymentStatus.PARTIAL;
+        } else {
+          paymentStatus = PaymentStatus.UNPAID;
+        }
+      }
+
+      return {
+        ...invoice,
+        totalPaid,
+        remainingBalance,
+        paymentStatus,
+        isOverdue,
+      };
+    });
+  }
+
+  /**
+   * Get overdue invoices with details
+   */
+  getOverdueInvoices(): Array<Invoice & {
+    totalPaid: number;
+    remainingBalance: number;
+    daysOverdue: number;
+    customerName: string | null;
+  }> {
+    const invoices = this.invoiceRepo.getOutstandingInvoices();
+    const now = new Date();
+
+    return invoices
+      .filter(invoice => {
+        if (!invoice.dueDate) return false;
+        return new Date(invoice.dueDate) < now;
+      })
+      .map(invoice => {
+        const totalPaid = this.paymentRepo.getTotalPaid(invoice.id);
+        const remainingBalance = Math.max(0, invoice.netTotal - totalPaid);
+        const dueDate = new Date(invoice.dueDate!);
+        const daysOverdue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        const customer = this.customerRepo.getById(invoice.customerId);
+
+        return {
+          ...invoice,
+          totalPaid,
+          remainingBalance,
+          daysOverdue,
+          customerName: customer?.name ?? null,
+        };
+      })
+      .filter(inv => inv.remainingBalance > 0.01)
+      .sort((a, b) => b.daysOverdue - a.daysOverdue);
+  }
+
+  /**
+   * Make a partial payment to an invoice
+   */
+  makePartialPayment(invoiceId: string, amount: number, method: string, notes?: string): {
+    payment: any;
+    remainingBalance: number;
+    isFullyPaid: boolean;
+  } {
+    const invoice = this.invoiceRepo.getById(invoiceId);
+    if (!invoice) throw new Error('Invoice not found');
+
+    if (invoice.status === InvoiceStatus.CANCELLED) {
+      throw new Error('Cannot pay cancelled invoice');
+    }
+    if (invoice.status === InvoiceStatus.DRAFT) {
+      throw new Error('Cannot pay draft invoice. Issue it first.');
+    }
+    if (amount <= 0) {
+      throw new Error('Payment amount must be positive');
+    }
+
+    const currentPaid = this.paymentRepo.getTotalPaid(invoiceId);
+    const currentRemaining = invoice.netTotal - currentPaid;
+
+    if (amount > currentRemaining + 0.01) {
+      throw new Error(`Payment (${amount}) exceeds remaining balance (${currentRemaining.toFixed(2)})`);
+    }
+
+    const payment = this.paymentRepo.create({
+      invoiceId,
+      amount,
+      paidDate: new Date().toISOString(),
+      method: method as any,
+      notes,
+    });
+
+    const newTotalPaid = currentPaid + amount;
+    const remainingBalance = Math.max(0, invoice.netTotal - newTotalPaid);
+    const isFullyPaid = remainingBalance <= 0.01;
+
+    if (isFullyPaid) {
+      this.invoiceRepo.markAsPaid(invoiceId, method as any, undefined);
+      this.auditRepo.create('Invoice', invoiceId, AuditAction.MARK_PAID,
+        { status: invoice.status, totalPaid: currentPaid },
+        { status: InvoiceStatus.PAID, totalPaid: newTotalPaid }
+      );
+    } else {
+      this.auditRepo.create('Invoice', invoiceId, AuditAction.PARTIAL_PAYMENT,
+        { totalPaid: currentPaid, remainingBalance: currentRemaining },
+        { totalPaid: newTotalPaid, remainingBalance }
+      );
+    }
+
+    return { payment, remainingBalance, isFullyPaid };
   }
 }

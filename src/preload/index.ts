@@ -36,6 +36,17 @@ const api = {
       ipcRenderer.invoke(IpcChannels.CUSTOMER_MERGE, sourceId, targetId),
     getHistory: (customerId: string) =>
       ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_HISTORY, customerId),
+    // Debt & Balance
+    getSummary: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_SUMMARY, customerId),
+    getBalance: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_BALANCE, customerId),
+    getInvoiceStatuses: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_INVOICE_STATUSES, customerId),
+    getWithDebt: () =>
+      ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_WITH_DEBT),
+    getOverCredit: () =>
+      ipcRenderer.invoke(IpcChannels.CUSTOMER_GET_OVER_CREDIT),
   },
 
   // Sale
@@ -69,6 +80,15 @@ const api = {
     delete: (id: string) => ipcRenderer.invoke(IpcChannels.INVOICE_DELETE, id),
     exportPdf: (invoiceId: string) =>
       ipcRenderer.invoke(IpcChannels.EXPORT_INVOICE_PDF, invoiceId),
+    // Payment status
+    getPaymentSummary: (invoiceId: string) =>
+      ipcRenderer.invoke(IpcChannels.INVOICE_GET_PAYMENT_SUMMARY, invoiceId),
+    getCustomerWithPayments: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.INVOICE_GET_CUSTOMER_WITH_PAYMENTS, customerId),
+    getOverdue: () =>
+      ipcRenderer.invoke(IpcChannels.INVOICE_GET_OVERDUE),
+    makePartialPayment: (invoiceId: string, amount: number, method: string, notes?: string) =>
+      ipcRenderer.invoke(IpcChannels.INVOICE_MAKE_PARTIAL_PAYMENT, invoiceId, amount, method, notes),
   },
 
   // Payment
@@ -77,6 +97,13 @@ const api = {
     getByInvoice: (invoiceId: string) =>
       ipcRenderer.invoke(IpcChannels.PAYMENT_GET_BY_INVOICE, invoiceId),
     delete: (id: string) => ipcRenderer.invoke(IpcChannels.PAYMENT_DELETE, id),
+    // Debt tracking
+    getByCustomer: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.PAYMENT_GET_BY_CUSTOMER, customerId),
+    getInvoiceDetail: (invoiceId: string) =>
+      ipcRenderer.invoke(IpcChannels.PAYMENT_GET_INVOICE_DETAIL, invoiceId),
+    getCustomerDebt: (customerId: string) =>
+      ipcRenderer.invoke(IpcChannels.PAYMENT_GET_CUSTOMER_DEBT, customerId),
   },
 
   // Report
@@ -103,6 +130,13 @@ const api = {
       ipcRenderer.invoke(IpcChannels.REPORT_GET_INVOICE_STATUS),
     getRevenueSummary: (startDate: string, endDate: string) =>
       ipcRenderer.invoke(IpcChannels.REPORT_GET_REVENUE_SUMMARY, startDate, endDate),
+    // Debt & aging reports
+    getDebtAging: () =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_DEBT_AGING),
+    getPaymentPerformance: () =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_PAYMENT_PERFORMANCE),
+    getCollectionSummary: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke(IpcChannels.REPORT_GET_COLLECTION_SUMMARY, startDate, endDate),
   },
 
   // Export

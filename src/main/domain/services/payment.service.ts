@@ -14,18 +14,27 @@ import {
   Payment,
   Invoice,
   PaymentDto,
+  InvoicePaymentDetail,
+  InvoicePaymentSummary,
+  CustomerDebtSummary,
 } from '../../../shared/types/entities';
-import { InvoiceStatus, PaymentMethod, AuditAction } from '../../../shared/types/enums';
+import { InvoiceStatus, PaymentMethod, PaymentStatus, AuditAction } from '../../../shared/types/enums';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { InvoiceRepository } from '../../repositories/invoice.repository';
+import { CustomerRepository } from '../../repositories/customer.repository';
 import { AuditLogRepository } from '../../repositories/audit-log.repository';
 
 export class PaymentService {
+  private customerRepo: CustomerRepository;
+
   constructor(
     private paymentRepo: PaymentRepository,
     private invoiceRepo: InvoiceRepository,
-    private auditRepo: AuditLogRepository
-  ) {}
+    private auditRepo: AuditLogRepository,
+    customerRepo?: CustomerRepository
+  ) {
+    this.customerRepo = customerRepo || new CustomerRepository();
+  }
 
   /**
    * Record a payment for an invoice
@@ -206,6 +215,200 @@ export class PaymentService {
     } catch (err: any) {
       throw new Error(`Failed to reverse payment: ${err.message}`);
     }
+  }
+
+  // =========================================================================
+  // Debt & Payment Status Tracking
+  // =========================================================================
+
+  /**
+   * Determine payment status of an invoice
+   */
+  getInvoicePaymentStatus(invoice: Invoice): PaymentStatus {
+    if (invoice.status === InvoiceStatus.PAID) return PaymentStatus.PAID;
+    if (invoice.status === InvoiceStatus.CANCELLED) return PaymentStatus.UNPAID;
+
+    const totalPaid = this.paymentRepo.getTotalPaid(invoice.id);
+    const remaining = invoice.totalAmount - totalPaid;
+
+    if (remaining <= 0.01) return PaymentStatus.PAID;
+
+    const isOverdue = invoice.dueDate
+      ? new Date(invoice.dueDate) < new Date() && remaining > 0.01
+      : false;
+
+    if (isOverdue) return PaymentStatus.OVERDUE;
+    if (totalPaid > 0) return PaymentStatus.PARTIAL;
+    return PaymentStatus.UNPAID;
+  }
+
+  /**
+   * Calculate days overdue for an invoice
+   */
+  getDaysOverdue(invoice: Invoice): number {
+    if (!invoice.dueDate) return 0;
+    const dueDate = new Date(invoice.dueDate);
+    const now = new Date();
+    if (now <= dueDate) return 0;
+    return Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  /**
+   * Get all payments for a customer
+   */
+  getPaymentsByCustomer(customerId: string): Payment[] {
+    return this.paymentRepo.getByCustomerId(customerId);
+  }
+
+  /**
+   * Get full payment detail for a single invoice
+   */
+  getInvoicePaymentDetail(invoiceId: string): InvoicePaymentDetail | null {
+    const invoice = this.invoiceRepo.getById(invoiceId);
+    if (!invoice) return null;
+
+    const payments = this.paymentRepo.getByInvoiceId(invoiceId);
+    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+    const remainingBalance = Math.max(0, invoice.totalAmount - totalPaid);
+    const paymentStatus = this.getInvoicePaymentStatus(invoice);
+    const daysOverdue = this.getDaysOverdue(invoice);
+    const isOverdue = daysOverdue > 0 && remainingBalance > 0.01;
+
+    let customerName: string | null = null;
+    if (invoice.customerId) {
+      const customer = this.customerRepo.getById(invoice.customerId);
+      customerName = customer?.name ?? null;
+    }
+
+    const lastPaymentDate = payments.length > 0 ? payments[0].paidDate : null;
+
+    return {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      customerId: invoice.customerId,
+      customerName,
+      netTotal: invoice.totalAmount,
+      totalPaid,
+      remainingBalance,
+      paymentStatus,
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      lastPaymentDate,
+      payments,
+      isOverdue,
+      daysOverdue,
+    };
+  }
+
+  /**
+   * Get complete debt summary for a customer
+   */
+  getCustomerDebtSummary(customerId: string): CustomerDebtSummary | null {
+    const customer = this.customerRepo.getById(customerId);
+    if (!customer) return null;
+
+    const invoices = this.invoiceRepo.getByCustomerId(customerId);
+    const activeInvoices = invoices.filter(inv => inv.status !== InvoiceStatus.CANCELLED);
+
+    let totalInvoiced = 0;
+    let totalPaid = 0;
+    let paidInvoiceCount = 0;
+    let partiallyPaidInvoiceCount = 0;
+    let unpaidInvoiceCount = 0;
+    let overdueInvoiceCount = 0;
+    let currentDue = 0;
+    let overdue1to30 = 0;
+    let overdue31to60 = 0;
+    let overdue61to90 = 0;
+    let overdue90Plus = 0;
+    let lastInvoiceDate: string | null = null;
+
+    const invoiceDetails: InvoicePaymentDetail[] = [];
+
+    for (const invoice of activeInvoices) {
+      const payments = this.paymentRepo.getByInvoiceId(invoice.id);
+      const invoicePaid = payments.reduce((sum, p) => sum + p.amount, 0);
+      const remainingBalance = Math.max(0, invoice.totalAmount - invoicePaid);
+      const paymentStatus = this.getInvoicePaymentStatus(invoice);
+      const daysOverdue = this.getDaysOverdue(invoice);
+      const isOverdue = daysOverdue > 0 && remainingBalance > 0.01;
+
+      totalInvoiced += invoice.totalAmount;
+      totalPaid += invoicePaid;
+
+      switch (paymentStatus) {
+        case PaymentStatus.PAID: paidInvoiceCount++; break;
+        case PaymentStatus.PARTIAL: partiallyPaidInvoiceCount++; break;
+        case PaymentStatus.OVERDUE: overdueInvoiceCount++; break;
+        case PaymentStatus.UNPAID: unpaidInvoiceCount++; break;
+      }
+
+      if (remainingBalance > 0.01) {
+        if (!isOverdue) currentDue += remainingBalance;
+        else if (daysOverdue <= 30) overdue1to30 += remainingBalance;
+        else if (daysOverdue <= 60) overdue31to60 += remainingBalance;
+        else if (daysOverdue <= 90) overdue61to90 += remainingBalance;
+        else overdue90Plus += remainingBalance;
+      }
+
+      if (invoice.createdAt && (!lastInvoiceDate || invoice.createdAt > lastInvoiceDate)) {
+        lastInvoiceDate = invoice.createdAt;
+      }
+
+      const lastPaymentDate = payments.length > 0 ? payments[0].paidDate : null;
+
+      invoiceDetails.push({
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        customerId: invoice.customerId,
+        customerName: customer.name,
+        netTotal: invoice.totalAmount,
+        totalPaid: invoicePaid,
+        remainingBalance,
+        paymentStatus,
+        issueDate: invoice.issueDate,
+        dueDate: invoice.dueDate,
+        lastPaymentDate,
+        payments,
+        isOverdue,
+        daysOverdue,
+      });
+    }
+
+    const totalOutstanding = Math.max(0, totalInvoiced - totalPaid);
+    const lastPaymentDate = this.paymentRepo.getLastPaymentDateByCustomer(customerId);
+
+    const availableCredit = customer.creditLimit !== null
+      ? Math.max(0, customer.creditLimit - totalOutstanding)
+      : null;
+    const isOverCreditLimit = customer.creditLimit !== null
+      ? totalOutstanding > customer.creditLimit
+      : false;
+
+    return {
+      customerId: customer.id,
+      customerName: customer.name,
+      customerType: customer.customerType,
+      creditLimit: customer.creditLimit,
+      totalInvoiced,
+      totalPaid,
+      totalOutstanding,
+      totalInvoiceCount: activeInvoices.length,
+      paidInvoiceCount,
+      partiallyPaidInvoiceCount,
+      unpaidInvoiceCount,
+      overdueInvoiceCount,
+      currentDue,
+      overdue1to30,
+      overdue31to60,
+      overdue61to90,
+      overdue90Plus,
+      availableCredit,
+      isOverCreditLimit,
+      lastInvoiceDate,
+      lastPaymentDate,
+      invoices: invoiceDetails,
+    };
   }
 }
 

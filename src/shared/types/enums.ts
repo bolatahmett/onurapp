@@ -47,4 +47,19 @@ export enum AuditAction {
   MARK_PAID = 'MARK_PAID',
   CANCEL = 'CANCEL',
   MERGE = 'MERGE',
+  PARTIAL_PAYMENT = 'PARTIAL_PAYMENT',
+}
+
+/**
+ * Payment status for invoices (calculated from payments)
+ * UNPAID: No payments received
+ * PARTIAL: Some payments received, balance remaining
+ * PAID: Fully paid
+ * OVERDUE: Past due date and not fully paid
+ */
+export enum PaymentStatus {
+  UNPAID = 'UNPAID',
+  PARTIAL = 'PARTIAL',
+  PAID = 'PAID',
+  OVERDUE = 'OVERDUE',
 }

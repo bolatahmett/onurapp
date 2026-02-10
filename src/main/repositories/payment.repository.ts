@@ -120,4 +120,84 @@ export class PaymentRepository {
 
     return totalPaid;
   }
+
+  /**
+   * Get all payments for a customer (across all invoices)
+   */
+  getByCustomerId(customerId: string): Payment[] {
+    const db = getDatabase();
+    const stmt = db.prepare(
+      `SELECT p.id, p.invoice_id as invoiceId, p.amount, p.paid_date as paidDate,
+              p.method, p.notes, p.reference, p.created_at as createdAt
+       FROM payments p
+       JOIN invoices i ON p.invoice_id = i.id
+       WHERE i.customer_id = ?
+       ORDER BY p.paid_date DESC`
+    );
+    stmt.bind([customerId]);
+
+    const payments: Payment[] = [];
+    while (stmt.step()) {
+      const row = stmt.getAsObject() as any;
+      payments.push({
+        id: row.id,
+        invoiceId: row.invoiceId,
+        amount: row.amount,
+        paidDate: row.paidDate,
+        method: row.method,
+        notes: row.notes,
+        reference: row.reference,
+        createdAt: row.createdAt,
+      });
+    }
+    stmt.free();
+
+    return payments;
+  }
+
+  /**
+   * Get total paid amount across all invoices for a customer
+   */
+  getTotalPaidByCustomer(customerId: string): number {
+    const db = getDatabase();
+    const stmt = db.prepare(
+      `SELECT COALESCE(SUM(p.amount), 0) as totalPaid
+       FROM payments p
+       JOIN invoices i ON p.invoice_id = i.id
+       WHERE i.customer_id = ? AND i.status != 'CANCELLED'`
+    );
+    stmt.bind([customerId]);
+
+    let totalPaid = 0;
+    if (stmt.step()) {
+      const row = stmt.getAsObject() as any;
+      totalPaid = row.totalPaid || 0;
+    }
+    stmt.free();
+
+    return totalPaid;
+  }
+
+  /**
+   * Get the last payment date for a customer
+   */
+  getLastPaymentDateByCustomer(customerId: string): string | null {
+    const db = getDatabase();
+    const stmt = db.prepare(
+      `SELECT MAX(p.paid_date) as lastDate
+       FROM payments p
+       JOIN invoices i ON p.invoice_id = i.id
+       WHERE i.customer_id = ?`
+    );
+    stmt.bind([customerId]);
+
+    let lastDate: string | null = null;
+    if (stmt.step()) {
+      const row = stmt.getAsObject() as any;
+      lastDate = row.lastDate || null;
+    }
+    stmt.free();
+
+    return lastDate;
+  }
 }

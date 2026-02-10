@@ -26,6 +26,11 @@ export const IpcChannels = {
   CUSTOMER_DELETE: 'customer:delete',
   CUSTOMER_MERGE: 'customer:merge',
   CUSTOMER_GET_HISTORY: 'customer:getHistory',
+  CUSTOMER_GET_SUMMARY: 'customer:getSummary',
+  CUSTOMER_GET_BALANCE: 'customer:getBalance',
+  CUSTOMER_GET_INVOICE_STATUSES: 'customer:getInvoiceStatuses',
+  CUSTOMER_GET_WITH_DEBT: 'customer:getWithDebt',
+  CUSTOMER_GET_OVER_CREDIT: 'customer:getOverCredit',
 
   // Sale
   SALE_GET_ALL: 'sale:getAll',
@@ -54,7 +59,14 @@ export const IpcChannels = {
   PAYMENT_CREATE: 'payment:create',
   PAYMENT_GET_BY_INVOICE: 'payment:getByInvoice',
   PAYMENT_DELETE: 'payment:delete',
+  PAYMENT_GET_BY_CUSTOMER: 'payment:getByCustomer',
+  PAYMENT_GET_INVOICE_DETAIL: 'payment:getInvoiceDetail',
+  PAYMENT_GET_CUSTOMER_DEBT: 'payment:getCustomerDebt',
   INVOICE_MARK_PAID: 'invoice:markPaid',
+  INVOICE_GET_PAYMENT_SUMMARY: 'invoice:getPaymentSummary',
+  INVOICE_GET_CUSTOMER_WITH_PAYMENTS: 'invoice:getCustomerWithPayments',
+  INVOICE_GET_OVERDUE: 'invoice:getOverdue',
+  INVOICE_MAKE_PARTIAL_PAYMENT: 'invoice:makePartialPayment',
 
   // Report
   REPORT_DAILY_SUMMARY: 'report:dailySummary',
@@ -70,6 +82,9 @@ export const IpcChannels = {
   REPORT_GET_TRUCK_SUMMARY: 'report:getTruckSummary',
   REPORT_GET_INVOICE_STATUS: 'report:getInvoiceStatus',
   REPORT_GET_REVENUE_SUMMARY: 'report:getRevenueSummary',
+  REPORT_GET_DEBT_AGING: 'report:getDebtAging',
+  REPORT_GET_PAYMENT_PERFORMANCE: 'report:getPaymentPerformance',
+  REPORT_GET_COLLECTION_SUMMARY: 'report:getCollectionSummary',
 
   // Export
   EXPORT_REPORT_CSV: 'export:reportCsv',

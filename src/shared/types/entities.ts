@@ -1,12 +1,13 @@
-import { 
-  TruckStatus, 
-  UnitType, 
-  InvoiceStatus, 
+import {
+  TruckStatus,
+  UnitType,
+  InvoiceStatus,
   BackupType,
   PaymentMethod,
   CustomerType,
   DiscountType,
   AuditAction,
+  PaymentStatus,
 } from './enums';
 
 // ============================================================================
@@ -373,4 +374,99 @@ export interface CustomerHistoryEntry {
   totalPrice: number;
   invoiceNumber: string | null;
   invoiceStatus: InvoiceStatus | null;
+}
+
+// ============================================================================
+// Payment & Debt Tracking Types
+// ============================================================================
+
+/**
+ * Detailed payment info for a single invoice
+ * Shows: total amount, paid amount, remaining balance, payment status
+ */
+export interface InvoicePaymentDetail {
+  invoiceId: string;
+  invoiceNumber: string;
+  customerId: string;
+  customerName: string | null;
+  netTotal: number;
+  totalPaid: number;
+  remainingBalance: number;
+  paymentStatus: PaymentStatus;
+  issueDate: string | null;
+  dueDate: string | null;
+  lastPaymentDate: string | null;
+  payments: Payment[];
+  isOverdue: boolean;
+  daysOverdue: number;
+}
+
+/**
+ * Complete debt summary for a single customer
+ * Shows: total debt, paid amount, remaining balance, aging buckets
+ */
+export interface CustomerDebtSummary {
+  customerId: string;
+  customerName: string;
+  customerType: CustomerType;
+  creditLimit: number | null;
+
+  // Overall totals
+  totalInvoiced: number;
+  totalPaid: number;
+  totalOutstanding: number;
+
+  // Invoice counts
+  totalInvoiceCount: number;
+  paidInvoiceCount: number;
+  partiallyPaidInvoiceCount: number;
+  unpaidInvoiceCount: number;
+  overdueInvoiceCount: number;
+
+  // Aging buckets (days overdue)
+  currentDue: number;       // not yet due
+  overdue1to30: number;     // 1-30 days overdue
+  overdue31to60: number;    // 31-60 days overdue
+  overdue61to90: number;    // 61-90 days overdue
+  overdue90Plus: number;    // 90+ days overdue
+
+  // Credit info
+  availableCredit: number | null; // creditLimit - totalOutstanding
+  isOverCreditLimit: boolean;
+
+  // Last activity
+  lastInvoiceDate: string | null;
+  lastPaymentDate: string | null;
+
+  // Detailed invoice list
+  invoices: InvoicePaymentDetail[];
+}
+
+/**
+ * Payment summary for an invoice (lightweight version)
+ */
+export interface InvoicePaymentSummary {
+  invoiceId: string;
+  invoiceNumber: string;
+  netTotal: number;
+  totalPaid: number;
+  remainingBalance: number;
+  paymentStatus: PaymentStatus;
+  isOverdue: boolean;
+}
+
+/**
+ * Debt aging report across all customers
+ */
+export interface DebtAgingReport {
+  totalOutstanding: number;
+  totalOverdue: number;
+  currentDue: number;
+  overdue1to30: number;
+  overdue31to60: number;
+  overdue61to90: number;
+  overdue90Plus: number;
+  customerCount: number;
+  overdueCustomerCount: number;
+  customers: CustomerDebtSummary[];
 }
