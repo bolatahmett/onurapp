@@ -153,7 +153,9 @@
       "PARTIAL": "Partially Paid",
       "PAID": "Paid",
       "OVERDUE": "Overdue"
-    }
+    },
+    "locked": "Locked",
+    "lockedHint": "This invoice is locked because it is not in Draft status."
   },
   "reports": {
     "title": "Reports",
@@ -182,7 +184,22 @@
     "overdue31to60": "31-60 Days",
     "overdue61to90": "61-90 Days",
     "overdue90Plus": "90+ Days",
-    "customersWithDebt": "Customers with Debt"
+    "customersWithDebt": "Customers with Debt",
+    "overview": "Overview",
+    "collections": "Collections",
+    "totalRevenue": "Total Revenue",
+    "invoiceCount": "Invoice Count",
+    "totalPaid": "Total Paid",
+    "outstandingAmount": "Outstanding Amount",
+    "avgInvoiceValue": "Avg Invoice Value",
+    "totalCollected": "Total Collected",
+    "collectionRate": "Collection Rate",
+    "paymentsByMethod": "Payments by Method",
+    "dailyCollections": "Daily Collections",
+    "paymentPerformance": "Payment Performance",
+    "avgDaysToPay": "Avg Days to Pay",
+    "onTimeRate": "On-Time Rate",
+    "viewSales": "View Sales"
   },
   "settings": {
     "title": "Settings",

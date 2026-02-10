@@ -153,7 +153,9 @@
       "PARTIAL": "Kısmi Ödendi",
       "PAID": "Ödendi",
       "OVERDUE": "Vadesi Geçti"
-    }
+    },
+    "locked": "Kilitli",
+    "lockedHint": "Bu fatura Taslak durumunda olmadığı için kilitlenmiştir."
   },
   "reports": {
     "title": "Raporlar",
@@ -182,7 +184,22 @@
     "overdue31to60": "31-60 Gün",
     "overdue61to90": "61-90 Gün",
     "overdue90Plus": "90+ Gün",
-    "customersWithDebt": "Borçlu Müşteriler"
+    "customersWithDebt": "Borçlu Müşteriler",
+    "overview": "Genel Bakış",
+    "collections": "Tahsilatlar",
+    "totalRevenue": "Toplam Gelir",
+    "invoiceCount": "Fatura Sayısı",
+    "totalPaid": "Ödenen Tutar",
+    "outstandingAmount": "Kalan Alacak",
+    "avgInvoiceValue": "Ort. Fatura Tutarı",
+    "totalCollected": "Toplam Tahsilat",
+    "collectionRate": "Tahsilat Oranı",
+    "paymentsByMethod": "Yönteme Göre Ödemeler",
+    "dailyCollections": "Günlük Tahsilatlar",
+    "paymentPerformance": "Ödeme Performansı",
+    "avgDaysToPay": "Ort. Ödeme Süresi (Gün)",
+    "onTimeRate": "Zamanında Ödeme Oranı",
+    "viewSales": "Satışları Gör"
   },
   "settings": {
     "title": "Ayarlar",

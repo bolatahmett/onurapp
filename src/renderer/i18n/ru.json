@@ -155,7 +155,9 @@
       "PARTIAL": "Частично Оплачено",
       "PAID": "Оплачено",
       "OVERDUE": "Просрочено"
-    }
+    },
+    "locked": "Заблокировано",
+    "lockedHint": "Этот счет заблокирован, так как он не в статусе Черновик."
   },
   "reports": {
     "title": "Отчеты",
@@ -184,7 +186,22 @@
     "overdue31to60": "31-60 Дней",
     "overdue61to90": "61-90 Дней",
     "overdue90Plus": "90+ Дней",
-    "customersWithDebt": "Клиенты с Задолженностью"
+    "customersWithDebt": "Клиенты с Задолженностью",
+    "overview": "Обзор",
+    "collections": "Сборы",
+    "totalRevenue": "Общая выручка",
+    "invoiceCount": "Количество счетов",
+    "totalPaid": "Оплачено",
+    "outstandingAmount": "Дебиторская задолженность",
+    "avgInvoiceValue": "Средний чек",
+    "totalCollected": "Всего собрано",
+    "collectionRate": "Коэффициент сбора",
+    "paymentsByMethod": "Платежи по методам",
+    "dailyCollections": "Ежедневные сборы",
+    "paymentPerformance": "Платежная дисциплина",
+    "avgDaysToPay": "Ср. срок оплаты (дней)",
+    "onTimeRate": "Своевременность оплаты",
+    "viewSales": "Просмотр продаж"
   },
   "settings": {
     "title": "Параметры",

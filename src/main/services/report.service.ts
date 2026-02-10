@@ -207,21 +207,38 @@ export class ReportService {
     outstandingAmount: number;
     averageInvoiceValue: number;
   } {
-    const result = this.queryAll(
-      `SELECT
-        COALESCE(SUM(CASE WHEN i.status = 'PAID' THEN i.net_total ELSE 0 END), 0) as paid_amount,
-        COALESCE(SUM(CASE WHEN i.status IN ('DRAFT', 'ISSUED') THEN i.net_total ELSE 0 END), 0) as outstanding_amount,
-        COALESCE(SUM(i.subtotal), 0) as total_revenue,
+    // Total Revenue (Sales) in period - Using total_amount (with tax) for revenue
+    const revenueRes = this.queryAll(
+      `SELECT 
+        COALESCE(SUM(total_amount), 0) as total_revenue,
         COUNT(*) as invoice_count
-       FROM invoices i
-       WHERE date(i.created_at) BETWEEN ? AND ?`,
+       FROM invoices 
+       WHERE date(created_at) BETWEEN ? AND ? AND status != 'CANCELLED' AND deleted_at IS NULL`,
       [startDate, endDate]
     )[0];
 
-    const totalRevenue = result?.total_revenue || 0;
-    const invoiceCount = result?.invoice_count || 0;
-    const paidAmount = result?.paid_amount || 0;
-    const outstandingAmount = result?.outstanding_amount || 0;
+    // Total Payments Received in period
+    const paidRes = this.queryAll(
+      `SELECT COALESCE(SUM(amount), 0) as paid_amount
+       FROM payments
+       WHERE date(paid_date) BETWEEN ? AND ? AND deleted_at IS NULL`,
+      [startDate, endDate]
+    )[0];
+
+    // Total Outstanding (Current total debt, not filtered by date)
+    const outstandingRes = this.queryAll(
+      `SELECT 
+        COALESCE(SUM(i.total_amount - COALESCE(
+          (SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id AND p.deleted_at IS NULL), 0
+        )), 0) as outstanding_amount
+       FROM invoices i
+       WHERE i.status IN ('DRAFT', 'ISSUED') AND i.deleted_at IS NULL`
+    )[0];
+
+    const totalRevenue = revenueRes?.total_revenue || 0;
+    const invoiceCount = revenueRes?.invoice_count || 0;
+    const paidAmount = paidRes?.paid_amount || 0;
+    const outstandingAmount = outstandingRes?.outstanding_amount || 0;
 
     return {
       totalRevenue,
@@ -246,12 +263,12 @@ export class ReportService {
     // Get all outstanding invoices with customer info and payment totals
     const invoices = this.queryAll(
       `SELECT
-        i.id, i.invoice_number, i.customer_id, i.net_total, i.due_date, i.status, i.issue_date,
+        i.id, i.invoice_number, i.customer_id, i.total_amount as net_total, i.due_date, i.status, i.issue_date,
         c.name as customer_name, c.customer_type, c.credit_limit,
-        COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id), 0) as total_paid
+        COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id AND p.deleted_at IS NULL), 0) as total_paid
        FROM invoices i
        JOIN customers c ON i.customer_id = c.id
-       WHERE i.status IN ('DRAFT', 'ISSUED')
+       WHERE i.status IN ('DRAFT', 'ISSUED') AND i.deleted_at IS NULL
        ORDER BY c.name, i.due_date ASC`
     );
 
@@ -493,18 +510,18 @@ export class ReportService {
       `SELECT
         COALESCE(SUM(amount), 0) as total_collected
        FROM payments
-       WHERE date(paid_date) BETWEEN ? AND ?`,
+       WHERE date(paid_date) BETWEEN ? AND ? AND deleted_at IS NULL`,
       [startDate, endDate]
     )[0];
 
     // Total outstanding
     const outstanding = this.queryAll(
       `SELECT
-        COALESCE(SUM(i.net_total - COALESCE(
-          (SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id), 0
+        COALESCE(SUM(i.total_amount - COALESCE(
+          (SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id AND p.deleted_at IS NULL), 0
         )), 0) as total_outstanding
        FROM invoices i
-       WHERE i.status IN ('DRAFT', 'ISSUED')`
+       WHERE i.status IN ('DRAFT', 'ISSUED') AND i.deleted_at IS NULL`
     )[0];
 
     // Payments by method
