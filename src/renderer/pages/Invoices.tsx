@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus } from 'lucide-react';
+import { Plus, Lock, Unlock } from 'lucide-react';
 import { useIpc } from '../hooks/useIpc';
 import { DataTable } from '../components/common/DataTable';
 import { StatusBadge } from '../components/common/StatusBadge';
@@ -74,7 +74,7 @@ export function Invoices() {
         notes: createForm.notes || undefined,
         dueDate: createForm.dueDate || undefined,
       };
-      await window.api.invoice.create(dto);
+      await window.api.invoice.create(dto.customerId, dto.saleIds, dto);
       setShowCreate(false);
       setCreateForm({ customerId: '', notes: '', dueDate: '' });
       setSelectedSaleIds([]);
@@ -105,6 +105,11 @@ export function Invoices() {
     .reduce((sum, s) => sum + s.totalPrice, 0);
 
   const columns = [
+    {
+      key: 'isLocked',
+      header: '',
+      render: (item: Invoice) => item.isLocked ? <Lock size={14} className="text-amber-500" /> : null,
+    },
     { key: 'invoiceNumber', header: t('invoices.invoiceNumber') },
     {
       key: 'customerId',
@@ -282,6 +287,12 @@ export function Invoices() {
                   status={selectedInvoice.status}
                   label={t(`invoices.status.${selectedInvoice.status}`)}
                 />
+                {selectedInvoice.isLocked && (
+                  <span className="ml-2 inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
+                    <Lock size={12} />
+                    {t('invoices.locked')}
+                  </span>
+                )}
               </div>
               <div>
                 <span className="text-gray-500">{t('invoices.totalAmount')}: </span>
@@ -327,7 +338,7 @@ export function Invoices() {
                     {t('invoices.status.ISSUED')}
                   </button>
                 )}
-                {selectedInvoice.status === InvoiceStatus.ISSUED && selectedInvoice.status !== InvoiceStatus.PAID && (
+                {selectedInvoice.status === InvoiceStatus.ISSUED && (
                   <button
                     onClick={() => setShowPayment(true)}
                     className="btn-primary btn-sm"
@@ -336,13 +347,19 @@ export function Invoices() {
                   </button>
                 )}
                 {selectedInvoice.status !== InvoiceStatus.CANCELLED &&
-                  selectedInvoice.status !== InvoiceStatus.PAID && (
-                  <button
-                    onClick={() => updateStatus(selectedInvoice.id, InvoiceStatus.CANCELLED)}
-                    className="btn-danger btn-sm"
-                  >
-                    {t('invoices.status.CANCELLED')}
-                  </button>
+                  selectedInvoice.status !== InvoiceStatus.PAID &&
+                  !selectedInvoice.isLocked && (
+                    <button
+                      onClick={() => updateStatus(selectedInvoice.id, InvoiceStatus.CANCELLED)}
+                      className="btn-danger btn-sm"
+                    >
+                      {t('invoices.status.CANCELLED')}
+                    </button>
+                  )}
+                {selectedInvoice.isLocked && (
+                  <span className="text-xs text-gray-400 italic flex items-center gap-1">
+                    <Lock size={12} /> {t('invoices.lockedHint')}
+                  </span>
                 )}
               </div>
               <button onClick={() => setShowDetail(false)} className="btn-secondary btn-sm">

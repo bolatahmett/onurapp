@@ -128,6 +128,10 @@ export class InvoiceService {
     const invoice = this.invoiceRepo.getById(id);
     if (!invoice) return null;
 
+    if (invoice.isLocked) {
+      throw new Error('Cannot update a locked invoice');
+    }
+
     if (invoice.status !== InvoiceStatus.DRAFT && dto.status === InvoiceStatus.ISSUED) {
       throw new Error('Can only issue invoices from DRAFT status');
     }
@@ -152,6 +156,10 @@ export class InvoiceService {
   markAsPaid(id: string, dto: MarkInvoicePaidDto, userId?: string): Invoice | null {
     const invoice = this.invoiceRepo.getById(id);
     if (!invoice) return null;
+
+    if (invoice.status === InvoiceStatus.PAID) {
+      throw new Error('Invoice is already paid');
+    }
 
     if (invoice.status === InvoiceStatus.CANCELLED) {
       throw new Error('Cannot mark cancelled invoice as paid');
@@ -186,6 +194,10 @@ export class InvoiceService {
     const invoice = this.invoiceRepo.getById(id);
     if (!invoice) return null;
 
+    if (invoice.isLocked) {
+      throw new Error('Cannot cancel a locked invoice');
+    }
+
     if (invoice.status === InvoiceStatus.PAID) {
       throw new Error('Cannot cancel paid invoice');
     }
@@ -205,6 +217,10 @@ export class InvoiceService {
   delete(id: string): boolean {
     const invoice = this.invoiceRepo.getById(id);
     if (!invoice) return false;
+
+    if (invoice.isLocked) {
+      throw new Error('Cannot delete a locked invoice');
+    }
 
     if (invoice.status !== InvoiceStatus.DRAFT) {
       throw new Error('Can only delete DRAFT invoices');

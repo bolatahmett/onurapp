@@ -5,15 +5,15 @@ import { UnitType } from '../../shared/types/enums';
 
 export class ProductRepository extends BaseRepository {
   getAll(): Product[] {
-    return this.queryAll('SELECT * FROM products ORDER BY name ASC').map(this.mapRow);
+    return this.queryAll('SELECT * FROM products WHERE deleted_at IS NULL ORDER BY name ASC').map(this.mapRow);
   }
 
   getActive(): Product[] {
-    return this.queryAll('SELECT * FROM products WHERE is_active = 1 ORDER BY name ASC').map(this.mapRow);
+    return this.queryAll('SELECT * FROM products WHERE is_active = 1 AND deleted_at IS NULL ORDER BY name ASC').map(this.mapRow);
   }
 
   getById(id: string): Product | null {
-    const row = this.queryOne('SELECT * FROM products WHERE id = ?', [id]);
+    const row = this.queryOne('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL', [id]);
     return row ? this.mapRow(row) : null;
   }
 
@@ -46,7 +46,8 @@ export class ProductRepository extends BaseRepository {
   }
 
   delete(id: string): boolean {
-    this.execute('DELETE FROM products WHERE id = ?', [id]);
+    const now = this.now();
+    this.execute('UPDATE products SET deleted_at = ? WHERE id = ?', [now, id]);
     return this.changes() > 0;
   }
 
@@ -62,6 +63,7 @@ export class ProductRepository extends BaseRepository {
       isActive: row.is_active === 1,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      deletedAt: row.deleted_at,
     };
   }
 }

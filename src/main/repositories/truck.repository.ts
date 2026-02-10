@@ -5,18 +5,18 @@ import { TruckStatus } from '../../shared/types/enums';
 
 export class TruckRepository extends BaseRepository {
   getAll(): Truck[] {
-    return this.queryAll('SELECT * FROM trucks ORDER BY arrival_date DESC').map(this.mapRow);
+    return this.queryAll('SELECT * FROM trucks WHERE deleted_at IS NULL ORDER BY arrival_date DESC').map(this.mapRow);
   }
 
   getActive(): Truck[] {
     return this.queryAll(
-      'SELECT * FROM trucks WHERE status = ? ORDER BY arrival_date DESC',
+      'SELECT * FROM trucks WHERE status = ? AND deleted_at IS NULL ORDER BY arrival_date DESC',
       [TruckStatus.ACTIVE]
     ).map(this.mapRow);
   }
 
   getById(id: string): Truck | null {
-    const row = this.queryOne('SELECT * FROM trucks WHERE id = ?', [id]);
+    const row = this.queryOne('SELECT * FROM trucks WHERE id = ? AND deleted_at IS NULL', [id]);
     return row ? this.mapRow(row) : null;
   }
 
@@ -27,7 +27,7 @@ export class TruckRepository extends BaseRepository {
       `INSERT INTO trucks (id, plate_number, driver_name, driver_phone, arrival_date, status, notes, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, dto.plateNumber, dto.driverName ?? null, dto.driverPhone ?? null,
-       dto.arrivalDate ?? now, TruckStatus.ACTIVE, dto.notes ?? null, now, now]
+        dto.arrivalDate ?? now, TruckStatus.ACTIVE, dto.notes ?? null, now, now]
     );
     return this.getById(id)!;
   }
@@ -59,7 +59,8 @@ export class TruckRepository extends BaseRepository {
   }
 
   delete(id: string): boolean {
-    this.execute('DELETE FROM trucks WHERE id = ?', [id]);
+    const now = this.now();
+    this.execute('UPDATE trucks SET deleted_at = ? WHERE id = ?', [now, id]);
     return this.changes() > 0;
   }
 
@@ -75,6 +76,7 @@ export class TruckRepository extends BaseRepository {
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      deletedAt: row.deleted_at,
     };
   }
 }

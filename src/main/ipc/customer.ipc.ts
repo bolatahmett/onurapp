@@ -8,7 +8,6 @@ import {
   CustomerMergeRepository,
   SaleRepository,
   InvoiceRepository,
-  AuditLogRepository,
   PaymentRepository,
 } from '../repositories';
 
@@ -18,16 +17,14 @@ export function registerCustomerIpc(): void {
   const customerMergeRepo = new CustomerMergeRepository();
   const saleRepo = new SaleRepository();
   const invoiceRepo = new InvoiceRepository();
-  const auditRepo = new AuditLogRepository();
   const paymentRepo = new PaymentRepository();
 
-  // Initialize domain service with repositories (now includes paymentRepo)
+  // Initialize domain service with repositories
   const service = new CustomerService(
     customerRepo,
     customerMergeRepo,
     saleRepo,
     invoiceRepo,
-    auditRepo,
     paymentRepo
   );
 
@@ -36,7 +33,6 @@ export function registerCustomerIpc(): void {
   ipcMain.handle(IpcChannels.CUSTOMER_GET_ACTIVE, () => service.getActiveCustomers());
 
   ipcMain.handle(IpcChannels.CUSTOMER_GET_TEMPORARY, () => {
-    // Get customers where isTemporary = true and isActive = true
     return service.getAllCustomers().filter(c => c.isTemporary && c.isActive);
   });
 
@@ -64,7 +60,6 @@ export function registerCustomerIpc(): void {
 
   ipcMain.handle(IpcChannels.CUSTOMER_DELETE, (_, id: string) => {
     try {
-      // In the new service, we deactivate rather than delete
       const result = service.updateCustomer(id, { isActive: false });
       saveDatabase();
       return { success: !!result };
@@ -91,10 +86,6 @@ export function registerCustomerIpc(): void {
       return { success: false, error: error.message };
     }
   });
-
-  // =========================================================================
-  // Customer Debt & Balance Endpoints
-  // =========================================================================
 
   ipcMain.handle(IpcChannels.CUSTOMER_GET_SUMMARY, (_, customerId: string) => {
     try {

@@ -55,14 +55,16 @@ export class InvoiceRepository extends BaseRepository {
       dto.status === InvoiceStatus.ISSUED && invoice.status === InvoiceStatus.DRAFT
         ? now : invoice.issueDate;
 
+    const isLocked = dto.status && dto.status !== InvoiceStatus.DRAFT ? 1 : invoice.isLocked ? 1 : 0;
+
     this.execute(
-      `UPDATE invoices SET status = ?, notes = ?, due_date = ?, tax_rate = ?, issue_date = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE invoices SET status = ?, notes = ?, due_date = ?, tax_rate = ?, issue_date = ?, is_locked = ?, updated_at = ? WHERE id = ?`,
       [
         dto.status ?? invoice.status,
         dto.notes !== undefined ? dto.notes : invoice.notes,
         dto.dueDate !== undefined ? dto.dueDate : invoice.dueDate,
         dto.taxRate !== undefined ? dto.taxRate : invoice.taxRate,
-        issueDate, now, id,
+        issueDate, isLocked, now, id,
       ]
     );
     return this.getById(id);
@@ -82,7 +84,7 @@ export class InvoiceRepository extends BaseRepository {
     if (!invoice) return null;
     const now = this.now();
     this.execute(
-      `UPDATE invoices SET status = ?, payment_received_date = ?, payment_method = ?, paid_by_user_id = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE invoices SET status = ?, payment_received_date = ?, payment_method = ?, paid_by_user_id = ?, is_locked = 1, updated_at = ? WHERE id = ?`,
       [InvoiceStatus.PAID, now, paymentMethod, paidByUserId ?? null, now, id]
     );
     return this.getById(id);
@@ -93,7 +95,7 @@ export class InvoiceRepository extends BaseRepository {
     if (!invoice) return null;
     const now = this.now();
     this.execute(
-      `UPDATE invoices SET status = ?, cancelled_by_user_id = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE invoices SET status = ?, cancelled_by_user_id = ?, cancellation_reason = ?, is_locked = 1, updated_at = ? WHERE id = ?`,
       [InvoiceStatus.CANCELLED, cancelledByUserId ?? null, cancellationReason, now, id]
     );
     return this.getById(id);

@@ -21,12 +21,12 @@ import {
   SaleWithDetails,
   Sale,
 } from '../../../shared/types/entities';
-import { InvoiceStatus, AuditAction } from '../../../shared/types/enums';
+import { InvoiceStatus } from '../../../shared/types/enums';
+import { auditService } from '../../services/AuditService';
 import { InvoiceRepository } from '../../repositories/invoice.repository';
 import { SaleRepository } from '../../repositories/sale.repository';
 import { InvoiceNumberSequenceRepository } from '../../repositories/invoice-sequence.repository';
 import { InvoiceLineItemRepository } from '../../repositories/invoice-line-item.repository';
-import { AuditLogRepository } from '../../repositories/audit-log.repository';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { CustomerRepository } from '../../repositories/customer.repository';
 import { ProductRepository } from '../../repositories/product.repository';
@@ -39,13 +39,12 @@ export class InvoiceService {
     private saleRepo: SaleRepository,
     private sequenceRepo: InvoiceNumberSequenceRepository,
     private lineItemRepo: InvoiceLineItemRepository,
-    private auditRepo: AuditLogRepository,
     private paymentRepo: PaymentRepository,
     private customerRepo: CustomerRepository,
     private productRepo: ProductRepository,
     private truckRepo: TruckRepository,
     private truckInventoryRepo: TruckInventoryRepository
-  ) {}
+  ) { }
 
   /**
    * Create a new invoice from one or more sales
@@ -106,12 +105,12 @@ export class InvoiceService {
       this.invoiceRepo.updateTotals(invoice.id, totalSubtotal, taxRate);
 
       // Log audit entry
-      this.auditRepo.log('invoice', invoice.id, AuditAction.CREATE, null, {
+      auditService.log('Invoice', invoice.id, 'CREATE', null, JSON.stringify({
         invoiceNumber: invoice.invoiceNumber,
         customerId: invoice.customerId,
         totalAmount: netTotal,
         saleCount: saleIds.length,
-      });
+      }));
 
       return this.invoiceRepo.getById(invoice.id)!;
     } catch (err: any) {
@@ -159,6 +158,10 @@ export class InvoiceService {
     const current = this.invoiceRepo.getById(invoiceId);
     if (!current) return null;
 
+    if (current.isLocked) {
+      throw new Error('Cannot update a locked invoice');
+    }
+
     // Validate status transitions
     if (dto.status && !this.isValidStatusTransition(current.status, dto.status)) {
       throw new Error(
@@ -170,7 +173,11 @@ export class InvoiceService {
     const updated = this.invoiceRepo.update(invoiceId, dto);
 
     // Log audit entry
-    this.auditRepo.log('invoice', invoiceId, AuditAction.UPDATE, current, updated);
+    auditService.log('Invoice', invoiceId, 'UPDATE', null, JSON.stringify({
+      before: current.status,
+      after: updated?.status,
+      dto
+    }));
 
     return updated;
   }
@@ -225,6 +232,10 @@ export class InvoiceService {
   cancelInvoice(invoiceId: string, reason?: string): Invoice | null {
     const invoice = this.invoiceRepo.getById(invoiceId);
     if (!invoice) return null;
+
+    if (invoice.isLocked) {
+      throw new Error('Cannot cancel a locked invoice');
+    }
 
     if (invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.CANCELLED) {
       throw new Error(
@@ -295,10 +306,10 @@ export class InvoiceService {
     this.recalculateInvoiceTotals(invoiceId);
 
     // Log audit
-    this.auditRepo.log('invoice_line_item', lineItem.id, AuditAction.CREATE, null, {
+    auditService.log('InvoiceLineItem', lineItem.id, 'CREATE', null, JSON.stringify({
       invoiceId,
       saleId,
-    });
+    }));
 
     return lineItem;
   }
@@ -333,7 +344,7 @@ export class InvoiceService {
     this.recalculateInvoiceTotals(invoiceId);
 
     // Log audit
-    this.auditRepo.log('invoice_line_item', lineItem.id, AuditAction.DELETE, lineItem, null);
+    auditService.log('InvoiceLineItem', lineItem.id, 'DELETE', null, JSON.stringify(lineItem));
   }
 
   /**

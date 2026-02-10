@@ -18,11 +18,11 @@ import {
   InvoicePaymentSummary,
   CustomerDebtSummary,
 } from '../../../shared/types/entities';
-import { InvoiceStatus, PaymentMethod, PaymentStatus, AuditAction } from '../../../shared/types/enums';
+import { InvoiceStatus, PaymentMethod, PaymentStatus } from '../../../shared/types/enums';
+import { auditService } from '../../services/AuditService';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { InvoiceRepository } from '../../repositories/invoice.repository';
 import { CustomerRepository } from '../../repositories/customer.repository';
-import { AuditLogRepository } from '../../repositories/audit-log.repository';
 
 export class PaymentService {
   private customerRepo: CustomerRepository;
@@ -30,7 +30,6 @@ export class PaymentService {
   constructor(
     private paymentRepo: PaymentRepository,
     private invoiceRepo: InvoiceRepository,
-    private auditRepo: AuditLogRepository,
     customerRepo?: CustomerRepository
   ) {
     this.customerRepo = customerRepo || new CustomerRepository();
@@ -111,12 +110,12 @@ export class PaymentService {
       }
 
       // Log audit
-      this.auditRepo.log('payment', payment.id, AuditAction.CREATE, null, {
+      auditService.log('Payment', payment.id, 'CREATE', null, JSON.stringify({
         invoiceId,
         amount,
         method,
         balanceDue,
-      });
+      }));
 
       return payment;
     } catch (err: any) {
@@ -226,7 +225,10 @@ export class PaymentService {
       }
 
       // Log audit
-      this.auditRepo.log('payment', paymentId, AuditAction.DELETE, payment, null, reason);
+      auditService.log('Payment', paymentId, 'DELETE', null, JSON.stringify({
+        payment,
+        reason
+      }));
     } catch (err: any) {
       throw new Error(`Failed to reverse payment: ${err.message}`);
     }

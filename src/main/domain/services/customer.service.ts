@@ -21,12 +21,12 @@ import {
   CustomerDebtSummary,
   InvoicePaymentSummary,
 } from '../../../shared/types/entities';
-import { AuditAction, InvoiceStatus, PaymentStatus } from '../../../shared/types/enums';
+import { InvoiceStatus, PaymentStatus } from '../../../shared/types/enums';
+import { auditService } from '../../services/AuditService';
 import { CustomerRepository } from '../../repositories/customer.repository';
 import { CustomerMergeRepository } from '../../repositories/customer-merge.repository';
 import { SaleRepository } from '../../repositories/sale.repository';
 import { InvoiceRepository } from '../../repositories/invoice.repository';
-import { AuditLogRepository } from '../../repositories/audit-log.repository';
 import { PaymentRepository } from '../../repositories/payment.repository';
 
 export class CustomerService {
@@ -37,7 +37,6 @@ export class CustomerService {
     private customerMergeRepo: CustomerMergeRepository,
     private saleRepo: SaleRepository,
     private invoiceRepo: InvoiceRepository,
-    private auditRepo: AuditLogRepository,
     paymentRepo?: PaymentRepository
   ) {
     this.paymentRepo = paymentRepo || new PaymentRepository();
@@ -55,10 +54,10 @@ export class CustomerService {
       const customer = this.customerRepo.create(dto);
 
       // Log audit
-      this.auditRepo.log('customer', customer.id, AuditAction.CREATE, null, {
+      auditService.log('Customer', customer.id, 'CREATE', null, JSON.stringify({
         name: customer.name,
         isTemporary: customer.isTemporary,
-      });
+      }));
 
       return customer;
     } catch (err: any) {
@@ -99,7 +98,11 @@ export class CustomerService {
       const updated = this.customerRepo.getById(customerId)!;
 
       // Log audit
-      this.auditRepo.log('customer', customerId, AuditAction.UPDATE, current, updated);
+      auditService.log('Customer', customerId, 'UPDATE', null, JSON.stringify({
+        before: current.name,
+        after: updated.name,
+        dto
+      }));
 
       return updated;
     } catch (err: any) {
@@ -170,22 +173,22 @@ export class CustomerService {
       });
 
       // Log audit entries
-      this.auditRepo.log('customer', sourceCustomerId, AuditAction.UPDATE, source, {
-        ...source,
+      auditService.log('Customer', sourceCustomerId, 'UPDATE', null, JSON.stringify({
         isActive: false,
-      });
+        reason: 'MERGE'
+      }));
 
-      this.auditRepo.log(
-        'customer_merge',
+      auditService.log(
+        'CustomerMerge',
         merge.id,
-        AuditAction.MERGE,
+        'MERGE',
         null,
-        {
+        JSON.stringify({
           sourceCustomerId,
           targetCustomerId,
           saleCount: sourceSales.length,
           invoiceCount: sourceInvoices.length,
-        }
+        })
       );
     } catch (err: any) {
       throw new Error(`Failed to merge customers: ${err.message}`);
@@ -269,8 +272,8 @@ export class CustomerService {
     const lastPurchaseDate =
       sales.length > 0
         ? sales.reduce((latest, sale) =>
-            new Date(sale.saleDate) > new Date(latest.saleDate) ? sale : latest
-          ).saleDate
+          new Date(sale.saleDate) > new Date(latest.saleDate) ? sale : latest
+        ).saleDate
         : null;
 
     const outstandingInvoices = invoices.filter(

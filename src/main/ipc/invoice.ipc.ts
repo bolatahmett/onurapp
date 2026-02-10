@@ -10,7 +10,6 @@ import {
   SaleRepository,
   InvoiceNumberSequenceRepository,
   InvoiceLineItemRepository,
-  AuditLogRepository,
   PaymentRepository,
   CustomerRepository,
   ProductRepository,
@@ -24,7 +23,6 @@ export function registerInvoiceIpc(): void {
   const saleRepo = new SaleRepository();
   const sequenceRepo = new InvoiceNumberSequenceRepository();
   const lineItemRepo = new InvoiceLineItemRepository();
-  const auditRepo = new AuditLogRepository();
   const paymentRepo = new PaymentRepository();
   const customerRepo = new CustomerRepository();
   const productRepo = new ProductRepository();
@@ -37,7 +35,6 @@ export function registerInvoiceIpc(): void {
     saleRepo,
     sequenceRepo,
     lineItemRepo,
-    auditRepo,
     paymentRepo,
     customerRepo,
     productRepo,
@@ -48,15 +45,14 @@ export function registerInvoiceIpc(): void {
   const paymentService = new PaymentService(
     paymentRepo,
     invoiceRepo,
-    auditRepo,
     customerRepo
   );
 
   ipcMain.handle(IpcChannels.INVOICE_GET_ALL, () => invoiceRepo.getAll());
-  
+
   ipcMain.handle(IpcChannels.INVOICE_GET_BY_ID, (_, id: string) => invoiceService.getInvoiceWithDetails(id));
-  
-  ipcMain.handle(IpcChannels.INVOICE_GET_BY_CUSTOMER, (_, customerId: string) => 
+
+  ipcMain.handle(IpcChannels.INVOICE_GET_BY_CUSTOMER, (_, customerId: string) =>
     invoiceService.getInvoicesByCustomer(customerId)
   );
 
@@ -112,7 +108,6 @@ export function registerInvoiceIpc(): void {
 
   ipcMain.handle(IpcChannels.PAYMENT_CREATE, (_, invoiceId: string, amount: number, paidDate: string, method: string, notes?: string) => {
     try {
-      // Cast method string to PaymentMethod enum
       const paymentMethod = method as PaymentMethod;
       const payment = paymentService.recordPayment(invoiceId, amount, paymentMethod, paidDate, notes);
       saveDatabase();
@@ -122,7 +117,7 @@ export function registerInvoiceIpc(): void {
     }
   });
 
-  ipcMain.handle(IpcChannels.PAYMENT_GET_BY_INVOICE, (_, invoiceId: string) => 
+  ipcMain.handle(IpcChannels.PAYMENT_GET_BY_INVOICE, (_, invoiceId: string) =>
     paymentService.getPaymentsByInvoice(invoiceId)
   );
 
@@ -135,10 +130,6 @@ export function registerInvoiceIpc(): void {
       return { success: false, error: error.message };
     }
   });
-
-  // =========================================================================
-  // Payment & Debt Tracking Endpoints
-  // =========================================================================
 
   ipcMain.handle(IpcChannels.PAYMENT_GET_BY_CUSTOMER, (_, customerId: string) => {
     try {
@@ -211,7 +202,6 @@ export function registerInvoiceIpc(): void {
         const payment = paymentService.recordPayment(invoiceId, amount, paymentMethod, paidDate, notes);
         saveDatabase();
 
-        // Return payment with remaining balance info
         const totalPaid = paymentService.getTotalPaid(invoiceId);
         const invoice = invoiceRepo.getById(invoiceId);
         const remainingBalance = invoice ? Math.max(0, invoice.totalAmount - totalPaid) : 0;

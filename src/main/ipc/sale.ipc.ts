@@ -9,7 +9,6 @@ import {
   SaleRepository,
   InvoiceNumberSequenceRepository,
   InvoiceLineItemRepository,
-  AuditLogRepository,
   PaymentRepository,
   CustomerRepository,
   ProductRepository,
@@ -21,24 +20,23 @@ import { CreateInvoiceDto } from '../../shared/types/entities';
 export function registerSaleIpc(): void {
   const service = new SaleService();
 
-  // Initialize invoice service so we can auto-create invoices when requested
+  // Initialize repositories
   const invoiceRepo = new InvoiceRepository();
   const saleRepo = new SaleRepository();
   const sequenceRepo = new InvoiceNumberSequenceRepository();
   const lineItemRepo = new InvoiceLineItemRepository();
-  const auditRepo = new AuditLogRepository();
   const paymentRepo = new PaymentRepository();
   const customerRepo = new CustomerRepository();
   const productRepo = new ProductRepository();
   const truckRepo = new TruckRepository();
   const truckInventoryRepo = new TruckInventoryRepository();
 
+  // Initialize domain services (matching new constructors)
   const invoiceService = new InvoiceService(
     invoiceRepo,
     saleRepo,
     sequenceRepo,
     lineItemRepo,
-    auditRepo,
     paymentRepo,
     customerRepo,
     productRepo,
@@ -46,7 +44,11 @@ export function registerSaleIpc(): void {
     truckInventoryRepo
   );
 
-  const paymentService = new PaymentService(paymentRepo, invoiceRepo, auditRepo);
+  const paymentService = new PaymentService(
+    paymentRepo,
+    invoiceRepo,
+    customerRepo
+  );
 
   ipcMain.handle(IpcChannels.SALE_GET_ALL, () => service.getAll());
   ipcMain.handle(IpcChannels.SALE_GET_BY_TRUCK, (_, truckId: string) => service.getByTruck(truckId));
@@ -54,39 +56,42 @@ export function registerSaleIpc(): void {
   ipcMain.handle(IpcChannels.SALE_GET_UNASSIGNED, () => service.getUnassigned());
   ipcMain.handle(IpcChannels.SALE_GET_UNINVOICED, (_, customerId?: string) => service.getUninvoiced(customerId));
   ipcMain.handle(IpcChannels.SALE_GET_BY_ID, (_, id: string) => service.getById(id));
-  
+
   ipcMain.handle(IpcChannels.SALE_CREATE, (_, dto) => {
     const sale = service.create(dto);
     try {
       // If client requested auto-invoice and sale has a customer, create invoice
       if (dto.autoInvoice && dto.customerId) {
-        const invoice = invoiceService.createInvoiceFromSales(dto.customerId, [sale.id], { customerId: dto.customerId, saleIds: [sale.id] });
-        
+        const invoice = invoiceService.createInvoiceFromSales(
+          dto.customerId,
+          [sale.id],
+          { customerId: dto.customerId, saleIds: [sale.id] }
+        );
+
         if (invoice) {
           // Issue the invoice first (before recording payment) with the sale date
           invoiceService.issueInvoice(invoice.id, sale.saleDate);
-          
-          // Then record payment if sale had a payment (payment recording will mark as PAID if fully paid)
+
+          // Then record payment if sale had a payment
           if (sale.paidAmount && sale.paidAmount > 0) {
             paymentService.recordPayment(
               invoice.id,
               sale.paidAmount,
-              'CASH' as any, // Default to CASH for auto-invoice payments
+              'CASH' as any,
               sale.saleDate,
-              'Otomatik satış ödemesi' // Auto-invoice payment
+              'Otomatik satış ödemesi'
             );
           }
         }
-        
+
         saveDatabase();
       }
     } catch (err) {
-      // swallow invoice creation errors to not break sale creation; log later if needed
       console.error('Auto-invoice creation failed:', err);
     }
     return sale;
   });
-  
+
   ipcMain.handle(IpcChannels.SALE_UPDATE, (_, id: string, dto) => service.update(id, dto));
   ipcMain.handle(IpcChannels.SALE_ASSIGN_CUSTOMER, (_, saleIds: string[], customerId: string) =>
     service.assignCustomer(saleIds, customerId)
