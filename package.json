@@ -1,6 +1,6 @@
 {
   "name": "onurltd",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Fruit Market Management System - Offline-first desktop application",
   "main": "dist/main/index.js",
   "scripts": {
@@ -12,7 +12,8 @@
     "build:preload": "esbuild src/preload/index.ts --bundle --platform=node --outfile=dist/preload/index.js --external:electron",
     "build:renderer": "vite build",
     "start": "electron .",
-    "dist": "npm run build && electron-builder"
+    "dist": "npm run build && electron-builder",
+    "release": "npm run build && node scripts/release.js"
   },
   "dependencies": {
     "@types/pdfkit": "^0.17.4",

@@ -1,0 +1,41 @@
+
+═══════════════════════════════════════════════════════════
+  OnurLtd Market - Sürüm 1.0.2
+═══════════════════════════════════════════════════════════
+
+Derleme Tarihi: 10 Şubat 2026
+
+Platform: Windows 10/11 (64-bit)
+Boyut: 123.39 MB
+
+─────────────────────────────────────────────────────────────
+KURULUM TALİMATLARI
+─────────────────────────────────────────────────────────────
+
+1. OnurLtd-Market-v1.0.2-Windows-x64.zip dosyasını açın
+2. İçeriği istediğiniz klasöre çıkarın
+3. OnurLtd Market.exe dosyasını çalıştırın
+4. Daha fazla bilgi için README.md dosyasına bakın
+
+─────────────────────────────────────────────────────────────
+DİL DESTEĞİ
+─────────────────────────────────────────────────────────────
+
+✓ Türkçe (TR)
+✓ İngilizce (EN)
+✓ Rusça (RU)
+
+─────────────────────────────────────────────────────────────
+ÖZELLİKLER
+─────────────────────────────────────────────────────────────
+
+✓ Satış Yönetimi
+✓ Otomatik Fatura Oluşturma
+✓ TIR/Kamyon Envanteri
+✓ Müşteri Borç Takibi
+✓ Ödeme Durumu Takibi
+✓ Raporlar (PDF)
+✓ Çevrimdışı Çalışma
+✓ Veri Yedekleme/Geri Yükleme
+
+═══════════════════════════════════════════════════════════
