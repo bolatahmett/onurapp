@@ -4,6 +4,7 @@ import { Save, Download, Upload, FolderOpen } from 'lucide-react';
 import { useIpc } from '../hooks/useIpc';
 import { DataTable } from '../components/common/DataTable';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
+import { LanguageSelector } from '../components/common/LanguageSelector';
 import { formatDateTime, formatFileSize } from '../utils/formatters';
 import { useAppStore } from '../store/appStore';
 import type { BackupLog } from '@shared/types/entities';
@@ -114,32 +115,8 @@ export function Settings() {
     <div className="space-y-6">
       <h2 className="page-title">{t('settings.title')}</h2>
 
-      {/* Language */}
-      <div className="card">
-        <h3 className="text-lg font-semibold mb-4">{t('settings.language')}</h3>
-        <div className="flex gap-3">
-          <button
-            onClick={() => handleLanguageChange('tr')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              i18n.language === 'tr'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {t('settings.languages.tr')}
-          </button>
-          <button
-            onClick={() => handleLanguageChange('en')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              i18n.language === 'en'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {t('settings.languages.en')}
-          </button>
-        </div>
-      </div>
+      {/* Language Selector Component */}
+      <LanguageSelector currentLanguage={i18n.language} onLanguageChange={handleLanguageChange} />
 
       {/* Backup Settings */}
       <div className="card">

@@ -3,7 +3,7 @@
 
 
 Uygulama Adı:    OnurLtd Market
-Sürüm:           1.0.0
+Sürüm:           1.0.2
 Derleme Tarihi:  10 Şubat 2026
 Platform:        Windows 10/11 (64-bit)
 Mimari:          x64
@@ -12,9 +12,19 @@ Mimari:          x64
 EK BİLGİLER
 
 
-Dil Desteği:     Türkçe, İngilizce
+Dil Desteği:     Türkçe, İngilizce, Rusça
 Veritabanı:      SQLite (Yerel)
 İnternet:        Gerekli değil (Çevrimdışı çalışır)
+
+
+YENİ ÖZELLİKLER (v1.0.2)
+
+
+ Dil Seçimi Arayüzü İyileştirildi
+   - Modern grid layout
+   - Ülke bayrakları göstergesi
+   - Yerel dil adlarıyla sunuş
+   - Responsive tasarım
 
 
 SİSTEM GEREKSİNİMLERİ
@@ -31,37 +41,20 @@ Minimum:
 - 1GB+ Disk Alanı
 
 
-KULLANILAN TEKNOLOJİLER
+SÜRÜM TARİHÇESİ
 
 
-Frontend:    React 19 + TypeScript
-Styling:     Tailwind CSS
-Desktop:     Electron 33
-Backend:     Node.js
-Database:    SQLite3
-State:       Zustand
-i18n:        i18next
+v1.0.2 (10 Şub 2026):
+- Dil seçimi component'i iyileştirildi
+- Modern UI/UX tasarımı
+- Responsive layout
 
+v1.0.1 (10 Şub 2026):
+- Rusça dil desteği eklendi
+- 3 dil: Türkçe, İngilizce, Rusça
 
-ÖZELLİKLER
-
-
- Satış Yönetimi
- Otomatik Fatura Oluşturma
- TIR/Kamyon Envanteri
- Müşteri Borç Takibi
- Ödeme Durumu Takibi
- Raporlar (PDF)
- Ayarlar ve Konfigürasyon
- Çevrimdışı Çalışma
- Veri Yedekleme/Geri Yükleme
-
-
-KURULUM
-
-
-1. "OnurLtd Market.exe" dosyasını çift tıklatın
-2. Uygulama açılacak ve çalışmaya hazır olacak
-3. Daha fazla bilgi için README.md'yi okuyun
+v1.0.0 (Oca-Şub 2026):
+- İlk sürüm
+- Temel satış, fatura, envanter sistemi
 
 
