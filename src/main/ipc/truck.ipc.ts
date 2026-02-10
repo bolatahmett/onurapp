@@ -69,6 +69,16 @@ export function registerTruckIpc(): void {
     }
   });
 
+  ipcMain.handle(IpcChannels.TRUCK_INVENTORY_DELETE, (_, truckId: string, productId: string) => {
+    try {
+      const success = inventoryService.removeProduct(truckId, productId);
+      saveDatabase();
+      return { success };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle(IpcChannels.TRUCK_INVENTORY_GET_REMAINING, (_, truckId: string, productId: string) => {
     const remaining = inventoryService.getRemainingQuantity(truckId, productId);
     return { remaining };

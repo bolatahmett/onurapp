@@ -80,6 +80,13 @@ export class TruckInventoryService {
   }
 
   /**
+   * Remove a product from truck inventory
+   */
+  removeProduct(truckId: string, productId: string): boolean {
+    return this.inventoryRepo.deleteByTruckAndProduct(truckId, productId);
+  }
+
+  /**
    * Clear all inventory from truck (when truck is closed)
    */
   clearTruckInventory(truckId: string): number {

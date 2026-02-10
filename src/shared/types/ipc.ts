@@ -12,6 +12,7 @@ export const IpcChannels = {
   TRUCK_INVENTORY_GET: 'truck:getInventory',
   TRUCK_INVENTORY_ADD: 'truck:addInventory',
   TRUCK_INVENTORY_UPDATE: 'truck:updateInventory',
+  TRUCK_INVENTORY_DELETE: 'truck:deleteInventory',
   TRUCK_INVENTORY_GET_REMAINING: 'truck:getRemainingQuantity',
   TRUCK_INVENTORY_CLEAR: 'truck:clearInventory',
 

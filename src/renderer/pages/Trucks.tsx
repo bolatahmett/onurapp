@@ -25,6 +25,7 @@ export function Trucks() {
   const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
   const [closingTruck, setClosingTruck] = useState<Truck | null>(null);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [existingInventoryIds, setExistingInventoryIds] = useState<string[]>([]); // Track which products were already in DB
   const [newInventoryProductId, setNewInventoryProductId] = useState('');
   const [newInventoryQty, setNewInventoryQty] = useState('');
   const [newInventoryUnitType, setNewInventoryUnitType] = useState<UnitType>(UnitType.CRATE);
@@ -35,6 +36,7 @@ export function Trucks() {
     setForm({ plateNumber: '', driverName: '', driverPhone: '', notes: '' });
     setEditingTruck(null);
     setInventoryItems([]);
+    setExistingInventoryIds([]);
     setNewInventoryProductId('');
     setNewInventoryQty('');
     setNewInventoryUnitType(UnitType.CRATE);
@@ -61,13 +63,17 @@ export function Trucks() {
     // Load inventory immediately when opening edit modal
     try {
       const inventory = await window.api.truck.getInventory(truck.id);
-      setInventoryItems(inventory.map(inv => ({
+      const existingItems = inventory.map(inv => ({
         productId: inv.productId,
         quantity: inv.quantity,
         unitType: inv.unitType,
-      })));
+      }));
+      setInventoryItems(existingItems);
+      // Track which products were already in database
+      setExistingInventoryIds(existingItems.map(item => item.productId));
     } catch (err) {
       setInventoryItems([]);
+      setExistingInventoryIds([]);
     }
   };
 
@@ -100,6 +106,9 @@ export function Trucks() {
 
   const removeInventoryItem = (productId: string) => {
     setInventoryItems((prev) => prev.filter((i) => i.productId !== productId));
+    // If this product was in the database (existing), we need to delete it on save
+    // Remove it from existingInventoryIds so it won't be skipped on save
+    // We'll track deletions separately
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,9 +132,19 @@ export function Trucks() {
             unitType: item.unitType,
           });
         }
-      } else if (editingTruck && inventoryItems.length > 0) {
-        // For edited truck, add inventory
-        for (const item of inventoryItems) {
+      } else if (editingTruck) {
+        // For edited truck, handle inventory changes
+        const currentProductIds = inventoryItems.map(item => item.productId);
+        
+        // Delete items that were in DB but removed from UI
+        const deletedProductIds = existingInventoryIds.filter(id => !currentProductIds.includes(id));
+        for (const productId of deletedProductIds) {
+          await window.api.truck.deleteInventory(editingTruck.id, productId);
+        }
+        
+        // Add new items (not in existingInventoryIds)
+        const newItems = inventoryItems.filter(item => !existingInventoryIds.includes(item.productId));
+        for (const item of newItems) {
           await window.api.truck.addInventory(editingTruck.id, {
             productId: item.productId,
             quantity: item.quantity,

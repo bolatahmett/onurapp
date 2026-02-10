@@ -41,6 +41,7 @@ export function Sales() {
     unitPrice: '',
     notes: '',
     autoInvoice: false,
+    paid: false,
   });
 
   // Auto-select first active truck
@@ -98,6 +99,7 @@ export function Sales() {
       unitPrice: '',
       notes: '',
       autoInvoice: false,
+      paid: false,
     }));
     setRemainingInventory(null);
   };
@@ -107,6 +109,7 @@ export function Sales() {
   const handleSubmit = async (e: React.FormEvent, saveAndNew: boolean) => {
     e.preventDefault();
     try {
+      const totalPrice = (parseFloat(form.quantity) || 0) * (parseFloat(form.unitPrice) || 0);
       const dto: CreateSaleDto = {
         truckId: form.truckId,
         productId: form.productId,
@@ -116,6 +119,7 @@ export function Sales() {
         unitPrice: parseFloat(form.unitPrice),
         notes: form.notes || undefined,
         autoInvoice: form.autoInvoice,
+        paidAmount: form.paid ? totalPrice : 0,
       };
       await window.api.sale.create(dto);
       refresh();
@@ -145,11 +149,13 @@ export function Sales() {
   };
 
   const handleProductChange = (productId: string) => {
-    const product = products?.find((p) => p.id === productId);
+    // Get unit type from truck inventory, not from product default
+    const truckInventoryItem = truckInventory.find((inv) => inv.productId === productId);
+    const unitType = truckInventoryItem?.unitType ?? UnitType.CRATE;
     setForm((f) => ({
       ...f,
       productId,
-      unitType: product?.defaultUnitType ?? f.unitType,
+      unitType,
     }));
   };
 
@@ -332,34 +338,25 @@ export function Sales() {
           </div>
 
           {/* Remaining Inventory Display */}
-          {remainingInventory !== null && (
+          {remainingInventory !== null && form.productId && (
             <div className={`p-2 rounded-lg text-sm ${
               remainingInventory > 0 
                 ? 'bg-blue-100 text-blue-800' 
                 : 'bg-red-100 text-red-800'
             }`}>
-              {t('sales.remainingInventory')}: <strong>{remainingInventory}</strong>
+              {t('sales.remainingInventory')}: <strong>{remainingInventory} {t(`sales.unitTypes.${form.unitType}`)}</strong>
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium mb-1">{t('sales.unitType')} *</label>
-            <div className="flex gap-2">
-              {Object.values(UnitType).map((ut) => (
-                <button
-                  key={ut}
-                  type="button"
-                  onClick={() => setForm({ ...form, unitType: ut })}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    form.unitType === ut
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {t(`sales.unitTypes.${ut}`)}
-                </button>
-              ))}
-            </div>
+            {form.productId ? (
+              <div className="bg-gray-100 border border-gray-300 rounded-lg p-2 text-sm">
+                {t(`sales.unitTypes.${form.unitType}`)}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm italic">{t('sales.selectProductFirst') || 'Lütfen önce ürün seçin'}</div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -370,6 +367,7 @@ export function Sales() {
                 type="number"
                 step="0.01"
                 min="0.01"
+                max={remainingInventory ?? undefined}
                 className="input-field"
                 value={form.quantity}
                 onChange={(e) => setForm({ ...form, quantity: e.target.value })}
@@ -419,6 +417,20 @@ export function Sales() {
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
+          </div>
+
+          {/* Payment Status Checkbox */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="paid"
+              checked={form.paid}
+              onChange={(e) => setForm({ ...form, paid: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <label htmlFor="paid" className="text-sm font-medium cursor-pointer">
+              {t('invoices.markPaid')}
+            </label>
           </div>
 
           {/* Auto-Invoice Checkbox */}

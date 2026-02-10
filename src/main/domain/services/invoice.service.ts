@@ -179,7 +179,7 @@ export class InvoiceService {
    * Issue an invoice (change status from DRAFT to ISSUED)
    * Sets the issueDate to now
    */
-  issueInvoice(invoiceId: string): Invoice | null {
+  issueInvoice(invoiceId: string, issueDate?: string): Invoice | null {
     const invoice = this.invoiceRepo.getById(invoiceId);
     if (!invoice) return null;
 
@@ -187,7 +187,7 @@ export class InvoiceService {
       throw new Error(`Only DRAFT invoices can be issued (current: ${invoice.status})`);
     }
 
-    const now = new Date().toISOString();
+    const now = issueDate || new Date().toISOString();
     return this.updateInvoice(invoiceId, {
       status: InvoiceStatus.ISSUED,
       issueDate: now,

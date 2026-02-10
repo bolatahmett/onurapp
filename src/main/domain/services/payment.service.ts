@@ -158,6 +158,8 @@ export class PaymentService {
     invoiceTotal: number;
     totalPaid: number;
     balance: number;
+    remainingBalance: number;
+    paymentStatus: string;
     payments: Payment[];
     status: InvoiceStatus;
   } {
@@ -169,11 +171,24 @@ export class PaymentService {
     const payments = this.getPaymentsByInvoice(invoiceId);
     const totalPaid = this.getTotalPaid(invoiceId);
     const balance = this.getBalance(invoiceId);
+    const remainingBalance = Math.max(0, balance);
+
+    // Determine payment status
+    let paymentStatus = 'UNPAID';
+    if (totalPaid >= invoice.totalAmount - 0.01) {
+      paymentStatus = 'PAID';
+    } else if (totalPaid > 0) {
+      paymentStatus = 'PARTIAL';
+    } else if (invoice.dueDate && new Date(invoice.dueDate) < new Date() && totalPaid < invoice.totalAmount) {
+      paymentStatus = 'OVERDUE';
+    }
 
     return {
       invoiceTotal: invoice.totalAmount,
       totalPaid,
       balance,
+      remainingBalance,
+      paymentStatus,
       payments,
       status: invoice.status,
     };

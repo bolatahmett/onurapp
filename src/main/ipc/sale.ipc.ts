@@ -2,6 +2,7 @@ import { ipcMain } from 'electron';
 import { IpcChannels } from '../../shared/types/ipc';
 import { SaleService } from '../services/sale.service';
 import { InvoiceService } from '../domain/services/invoice.service';
+import { PaymentService } from '../domain/services/payment.service';
 import { saveDatabase } from '../database/connection';
 import {
   InvoiceRepository,
@@ -45,6 +46,8 @@ export function registerSaleIpc(): void {
     truckInventoryRepo
   );
 
+  const paymentService = new PaymentService(paymentRepo, invoiceRepo, auditRepo);
+
   ipcMain.handle(IpcChannels.SALE_GET_ALL, () => service.getAll());
   ipcMain.handle(IpcChannels.SALE_GET_BY_TRUCK, (_, truckId: string) => service.getByTruck(truckId));
   ipcMain.handle(IpcChannels.SALE_GET_BY_CUSTOMER, (_, customerId: string) => service.getByCustomer(customerId));
@@ -57,7 +60,24 @@ export function registerSaleIpc(): void {
     try {
       // If client requested auto-invoice and sale has a customer, create invoice
       if (dto.autoInvoice && dto.customerId) {
-        invoiceService.createInvoiceFromSales(dto.customerId, [sale.id], { customerId: dto.customerId, saleIds: [sale.id] });
+        const invoice = invoiceService.createInvoiceFromSales(dto.customerId, [sale.id], { customerId: dto.customerId, saleIds: [sale.id] });
+        
+        if (invoice) {
+          // Issue the invoice first (before recording payment) with the sale date
+          invoiceService.issueInvoice(invoice.id, sale.saleDate);
+          
+          // Then record payment if sale had a payment (payment recording will mark as PAID if fully paid)
+          if (sale.paidAmount && sale.paidAmount > 0) {
+            paymentService.recordPayment(
+              invoice.id,
+              sale.paidAmount,
+              'CASH' as any, // Default to CASH for auto-invoice payments
+              sale.saleDate,
+              'Otomatik satış ödemesi' // Auto-invoice payment
+            );
+          }
+        }
+        
         saveDatabase();
       }
     } catch (err) {

@@ -16,6 +16,8 @@ const api = {
     addInventory: (truckId: string, dto: any) => ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_ADD, truckId, dto),
     updateInventory: (truckId: string, productId: string, quantity: number) => 
       ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_UPDATE, truckId, productId, quantity),
+    deleteInventory: (truckId: string, productId: string) =>
+      ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_DELETE, truckId, productId),
     getRemainingQuantity: (truckId: string, productId: string) =>
       ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_GET_REMAINING, truckId, productId),
     clearInventory: (truckId: string) => ipcRenderer.invoke(IpcChannels.TRUCK_INVENTORY_CLEAR, truckId),

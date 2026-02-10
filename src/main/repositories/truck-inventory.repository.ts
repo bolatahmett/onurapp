@@ -136,6 +136,12 @@ export class TruckInventoryRepository {
     return true;
   }
 
+  deleteByTruckAndProduct(truckId: string, productId: string): boolean {
+    const db = getDatabase();
+    db.run(`DELETE FROM truck_inventory WHERE truck_id = ? AND product_id = ?`, [truckId, productId]);
+    return db.getRowsModified() > 0;
+  }
+
   deleteByTruck(truckId: string): number {
     const db = getDatabase();
     db.run(`DELETE FROM truck_inventory WHERE truck_id = ?`, [truckId]);
